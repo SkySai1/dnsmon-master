@@ -1,13 +1,12 @@
 #!/etc/dnschecker-master/venv/bin/python3
 import secrets
-import sys
-import os
-import logging
+from datetime import datetime
 from back.accessdb import AccessDB, enginer
-from flask import Flask, g, request, current_app, session, render_template, redirect, url_for
+from flask import Flask, flash, request, current_app, session, render_template, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from back.logger import logsetup
 from initconf import getconf, loadconf
+from back.forms import LoginForm
 
 app = Flask(__name__)
 
@@ -15,27 +14,43 @@ app = Flask(__name__)
 def pre_load():
     if "user_id" in session:
         pass
-        #g.user = db.session.get(session["user_id"])
     elif request.form.get('action') == str(hash("login")):
-        pass
+        user = request.form.get('username')
+        passwd = request.form.get('password')
+        if user and passwd:
+            appdb = app.config.get('DB')
+            db = AccessDB(appdb.engine, CONF)
+            user_id = db.get_userid(user, passwd)
+            if user_id: 
+                session.update(user_id = user_id[0])
+                return redirect(request.url)
+            else:
+                flash('Пользователь не найден')
+                return login()
     else:
-        return render_template('login.html.j2', action = hash("login"))
+        return login()
     pass
+
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html.j2'), 404
+
+@app.errorhandler(500)
+def internal_server_error(e):
+    return render_template('500.html.j2'), 500
 
 @app.route('/login', methods=['GET','POST'])
 def login():
-    if request.method == 'POST':
-        if request.form.get('username') and request.form.get('password'):
-            session.update(user_id = 0)
-        return 'login'
-    else:
-        return render_template('login.html.j2', action = hash("login"))
-
+    if "user_id" in session:
+        return redirect('/')
+    form = LoginForm()
+    form.hidden_tag()
+    return render_template('login.html.j2', action = hash("login"), form=form)
 
 @app.route('/')
 def index():
     ua = request.headers.get('User-Agent')
-    return '<h1>%s</h1>' % ua
+    return render_template('index.html.j2', ua = ua, current_time=datetime.utcnow())
 
 @app.route('/user/<name>')
 def user(name):
@@ -44,8 +59,8 @@ def user(name):
 @app.route('/t')
 def test():
     r = 'Test'
+    appdb = app.config.get('DB')
     db = AccessDB(appdb.engine, CONF)
-    #d = AccessDB.GetFromDomains(appdb)
     d = db.get_geobase()
     r = []
     for obj in d:
@@ -56,14 +71,15 @@ def test():
 def start():
     logreciever = logsetup(CONF)
     engine = enginer(CONF)
-    #db = AccessDB(engine, CONF)
     app.config['SECRET_KEY'] = secrets.token_hex()
     app.config['SQLALCHEMY_DATABASE_URI'] = engine.url
-
-    global appdb
-    appdb = SQLAlchemy(app)
-
-
+    app.config['DB'] = SQLAlchemy(app)
+    db = AccessDB(engine, CONF)
+    if eval(CONF['GENERAL']['autouser']):
+        db.create_zero_user()
+    else:
+        db.delete_user(id='-1', name='admin')
+    
     app.run('0.0.0.0',5380,debug=True)
     
 

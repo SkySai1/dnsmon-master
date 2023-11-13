@@ -4,6 +4,8 @@ import time
 import uuid
 import sys
 import psycopg2
+from back.functions import randomword
+from hashlib import sha256
 from sqlalchemy.engine.base import Engine
 from sqlalchemy import CHAR, SmallInteger, TypeDecorator, engine, UUID, BigInteger, Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Text, ARRAY, exc, create_engine, delete, insert, select, or_, not_, update
 from sqlalchemy.orm import declarative_base, Session, relationship
@@ -68,6 +70,16 @@ class GUID(TypeDecorator):
             return value
         else:
             return uuid.UUID(value)
+
+class Users(Base):
+    __tablename__ = "users"
+    id = Column(Integer, primary_key=True)
+    role = Column(SmallInteger, default=1)
+    name = Column(String(255), nullable=False)
+    password = Column(String(255), nullable=False)
+    telegram = Column(String(255), default=None)
+    email = Column(String(255), default=None)
+    active = Column(Boolean, default=True)
         
 class Nodes(Base):
     __tablename__ = "nodes"
@@ -165,6 +177,53 @@ class AccessDB:
         logging.error('Database is lost connection')
         self.c.rollback()
     
+    def create_zero_user(self):
+        try:
+            rawpass = randomword(10)
+            password = sha256(rawpass.encode()).hexdigest()
+            with Session(self.engine) as conn:
+                id = conn.execute(select(Users.id).filter(Users.id == -1)).fetchone()
+                if id:
+                    stmt = update(Users).filter(Users.id == -1).values(password = password)
+                else:
+                    stmt = insert(Users).values(
+                        id = -1,
+                        role = 0,
+                        name = 'admin',
+                        password = password
+                    )
+                conn.execute(stmt)
+                conn.commit()
+                logging.info('AUTOUSER IS ENABLED. Current admin passwords is \'%s\'' % rawpass)
+        except Exception as e:
+            logging.error('Create zero user into database is fail', exc_info=(logging.DEBUG >= logging.root.level))
+            return None
+
+    def get_userid(self, user:str, rawpass:str):
+        try:
+            password = sha256(rawpass.encode()).hexdigest()
+            with Session(self.engine) as conn:
+                stmt = select(Users.id).filter(Users.name == user, Users.password == password)
+                return conn.execute(stmt).fetchone()
+        except Exception as e:
+            logging.error('Fail to get user data from database', exc_info=(logging.DEBUG >= logging.root.level))
+            return None   
+
+    def delete_user(self, id:str=None, email:str=None, name:str=None):
+        if id or email or name:
+            try:
+                where = []
+                if id: where.append(Users.id == id)
+                if email: where.append(Users.email == email)
+                if name: where.append(Users.name == name)
+                with Session(self.engine) as conn:
+                    stmt = delete(Users).filter(*where)
+                    conn.execute(stmt)
+                    conn.commit()
+            except Exception as e:
+                logging.error('Fail to delete user from database', exc_info=(logging.DEBUG >= logging.root.level))
+                return None                 
+
     def get_geobase(self):
         try:
             with Session(self.engine) as conn:
@@ -172,7 +231,7 @@ class AccessDB:
                 return result
         except Exception as e:
             logging.error('Get geobase from database is fail', exc_info=(logging.DEBUG >= logging.root.level))
-            return None, False  
+            return None
 
 
 

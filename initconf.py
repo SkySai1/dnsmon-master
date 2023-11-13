@@ -8,7 +8,7 @@ import os, platform
 import ipaddress
 
 _OPTIONS ={
-    'GENERAL': ['listen-ip', 'listen-port', 'timedelta'],
+    'GENERAL': ['listen-ip', 'listen-port', 'timedelta', 'autouser'],
     'DATABASE': ['dbuser', 'dbpass', 'dbhost', 'dbport', 'dbname'],
     'LOGGING' : ['enable', 'keeping', 'pathway' , 'level', 'separate', 'maxsize','rotation']
 }
@@ -57,6 +57,7 @@ def checkconf(CONF:configparser.ConfigParser):
                     if opt[0] == 'listen-ip': ipaddress.ip_address(opt[1]).version == 4
                     if opt[0] == 'listen-port': int(opt[1])
                     if opt[0] == 'printstats': eval(opt[1])
+                    if opt[0] == 'autouser': eval(opt[1])
                     if opt[0] == 'expire': float(opt[1])
                     if opt[0] == 'scale': float(opt[1])
                     if opt[0] == 'size': int(opt[1])
@@ -119,7 +120,10 @@ def deafultconf():
         'listen-ip': '127.0.0.2',
         'listen-port': 53,
         ";For mysql better keep timedelta as 0, for pgsql as your region timezone": None,
-        'timedelta': 3
+        'timedelta': 3,
+        ";For auto creating zero super user ('admin'), in each start password will random = True":None,
+        ";WARNING: logging level must set to INFO, password will send in there": None,
+        'autouser': True
     }
     config['DATABASE'] = {
         'dbuser': DBUser,
