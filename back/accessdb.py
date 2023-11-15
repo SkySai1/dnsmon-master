@@ -10,6 +10,7 @@ from sqlalchemy.engine.base import Engine
 from sqlalchemy import CHAR, SmallInteger, TypeDecorator, engine, UUID, BigInteger, Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Text, ARRAY, exc, create_engine, delete, insert, select, or_, not_, update
 from sqlalchemy.orm import declarative_base, Session, relationship
 from flask_sqlalchemy import SQLAlchemy
+from psycopg2.errors import UniqueViolation
 # --- DB structure
 
 Base = declarative_base()
@@ -86,23 +87,34 @@ class Nodes(Base):
     id = Column(Integer, primary_key=True)
     node = Column(String(255), unique=True)
 
+class DomainsList(Base):
+    __tablename__ = "domains_list"
+    id = Column(Integer, primary_key=True)
+    fqdn = Column(String(255), nullable=False, unique=True)
+
+
 class Domains(Base):  
     __tablename__ = "domains" 
     id = Column(BigInteger, primary_key=True)
     node = Column(String(255), ForeignKey('nodes.node', ondelete='cascade'), nullable=False)
     ts = Column(DateTime(timezone=True), nullable=False)  
-    domain = Column(String(255), nullable=False)  
+    domain = Column(String(255), ForeignKey('domains_list.fqdn', ondelete='cascade'), nullable=False) 
     status = Column(SmallInteger, nullable=False)
     result = Column(Text)
     message = Column(Text)
     auth = Column(String(255), default = None)
+
+class ZonesList(Base):
+    __tablename__ = "zones_list"
+    id = Column(Integer, primary_key=True)
+    fqdn = Column(String(255), nullable=False, unique=True)
 
 class Zones(Base):
     __tablename__ = "zones"
     id = Column(BigInteger, primary_key=True)
     node = Column(String(255), ForeignKey('nodes.node', ondelete='cascade'), nullable=False)
     ts = Column(DateTime(timezone=True), nullable=False)
-    zone = Column(String(255), nullable=False)
+    zone = Column(String(255), ForeignKey('zones_list.fqdn', ondelete='cascade'), nullable=False) 
     status = Column(Integer, nullable=False)
     serial = Column(Integer)
     message = Column(Text)
@@ -124,12 +136,19 @@ class ShortResolve(Base):
     rtime = Column(Float)
 
 
+class ServerList(Base):
+    __tablename__ = "server_list"
+    id = Column(Integer, primary_key=True)
+    name = Column(String(255), nullable=False, unique=True)
+    ip = Column(String(255), nullable=False, unique=True)
+    tag = Column(String(255), nullable=False)
+
 class Servers(Base):  
     __tablename__ = "servers" 
     id = Column(BigInteger, primary_key=True)
     node = Column(String(255), ForeignKey('nodes.node', ondelete='cascade'), nullable=False)
     ts = Column(DateTime(timezone=True), nullable=False)  
-    server = Column(String(255), nullable=False)  
+    server = Column(String(255), ForeignKey('server_list.name', ondelete='cascade'), nullable=False) 
     status = Column(SmallInteger, nullable=False)
     message = Column(Text)
 
@@ -222,7 +241,46 @@ class AccessDB:
                     conn.commit()
             except Exception as e:
                 logging.error('Fail to delete user from database', exc_info=(logging.DEBUG >= logging.root.level))
-                return None                 
+                return None
+
+    def get_domains(self, id:str=None, fqdn:str=None):
+        try:
+            where = []
+            if id: where.append(Users.id == id)
+            if fqdn: where.append(Users.email == fqdn)
+            with Session(self.engine) as conn:
+                result = conn.execute(select(DomainsList).filter(*where)).fetchall()
+                return result
+        except Exception as e:
+            logging.error('Get domains list from database is fail', exc_info=(logging.DEBUG >= logging.root.level))
+            return None
+        
+    def new_domain(self, fqdn:str=None):
+        try:
+            with Session(self.engine) as conn:
+                if conn.execute(select(DomainsList).filter(DomainsList.fqdn == fqdn)).fetchone():
+                    return UniqueViolation
+                stmt = insert(DomainsList).values(fqdn = fqdn).returning(DomainsList.fqdn)
+                result = conn.scalars(stmt).one_or_none()
+                conn.commit()
+                return result
+        except Exception as e:
+            logging.error('Add domain into database is fail', exc_info=(logging.DEBUG >= logging.root.level))
+            return ''
+    
+    def remove_domains(self, id:str=None, fqdn:str=None):
+        try:
+            where = []
+            if id: where.append(DomainsList.id == id)
+            if fqdn: where.append(DomainsList.fqdn == fqdn)
+            with Session(self.engine) as conn:
+                stmt = delete(DomainsList).filter(*where).returning(DomainsList.id)
+                result = conn.scalars(stmt).one()
+                conn.commit()
+                return result
+        except Exception as e:
+            logging.error('Remove domain list in database is fail', exc_info=(logging.DEBUG >= logging.root.level))
+            return None      
 
     def get_geobase(self):
         try:

@@ -6,7 +6,10 @@ from flask import Flask, flash, request, current_app, session, render_template, 
 from flask_sqlalchemy import SQLAlchemy
 from back.logger import logsetup
 from initconf import getconf, loadconf
-from back.forms import LoginForm
+from back.forms import LoginForm, NewDomain
+from back.object import Domain
+from back.functions import parse_list, domain_validate
+from psycopg2.errors import UniqueViolation
 
 app = Flask(__name__)
 
@@ -35,6 +38,11 @@ def pre_load():
 def page_not_found(e):
     return render_template('404.html.j2'), 404
 
+@app.errorhandler(405)
+def page_not_found(e):
+    return render_template('404.html.j2'), 404
+
+
 @app.errorhandler(500)
 def internal_server_error(e):
     return render_template('500.html.j2'), 500
@@ -56,17 +64,52 @@ def index():
 def user(name):
     return '<h1>Hello, %s!</h1>' %  (name)
 
-@app.route('/t')
-def test():
-    r = 'Test'
+@app.route('/domains', methods=['GET','POST'])
+def domains():
     appdb = app.config.get('DB')
     db = AccessDB(appdb.engine, CONF)
-    d = db.get_geobase()
-    r = []
-    for obj in d:
-        row = obj[0]
-        r.append((row.ip, row.country, row.city))
-    return r
+    data = db.get_domains()
+    d_list = parse_list(data)
+    form = NewDomain()
+    return render_template(
+        'domains.html.j2', 
+        domains = d_list, 
+        form = form, 
+        new = Domain.hash_new,
+        mv = Domain.hash_mv,
+        e = Domain.hash_edit
+    )
+
+@app.route('/domains/<domain>/<action>', methods = ['POST'])
+def new_domain(domain, action):
+    domain = domain_validate(domain)
+    if not domain: return '', 500
+
+    if action == Domain.hash_new:
+        db = AccessDB(app.config.get('DB').engine, CONF)
+        result = db.new_domain(domain)
+        if result and type(result) is str:
+            return [result]
+        elif result is UniqueViolation:
+            return 'exist', 520
+        else: 
+            return 'fail', 520
+        
+    elif action == Domain.hash_mv:
+        db = AccessDB(app.config.get('DB').engine, CONF)
+        result = db.remove_domains(fqdn=domain)
+        if result:
+            return str(result)
+        else:
+            return '', 520
+    
+    return '', 404
+
+
+@app.route('/t/<test>/')
+def test(test=None):
+    if not test: test = 'nope'
+    return test
 
 def start():
     logreciever = logsetup(CONF)
@@ -75,11 +118,13 @@ def start():
     app.config['SQLALCHEMY_DATABASE_URI'] = engine.url
     app.config['DB'] = SQLAlchemy(app)
     db = AccessDB(engine, CONF)
+
+    Domain.setup()
+
     if eval(CONF['GENERAL']['autouser']):
         db.create_zero_user()
     else:
         db.delete_user(id='-1', name='admin')
-    
     app.run('0.0.0.0',5380,debug=True)
     
 

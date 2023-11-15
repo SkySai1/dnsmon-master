@@ -1,0 +1,33 @@
+{% extends "base.html.j2" %}
+{% block title %}Домены{% endblock %}
+{% block head %}
+    {{ super() }}
+    <script type="text/javascript" src="static/js/domains.js"></script>
+    <style>
+    </style>
+{% endblock %}
+{% block body %}
+
+    <h1>Список доменов </h1>
+    <div>
+        <div>
+            <p id="message"></p>
+            <form method="post" action="{{new}}" onsubmit="return false">
+                
+                <p>{{form.domain()}}</p>
+                <p><button onclick="new_domain(this.form)">Плюсик</button>
+            </form>
+        </div>
+        <div>
+            <table id="d_list">
+                {% for domain, id in domains %}
+                    <tr>
+                        <td>{{loop.index0 + 1}}</td><td id="{{id}}">{{domain}}</td>
+                        <td><button>Ручка</button></td><td><button onclick="mv_domain($('#{{id}}').text(), '{{mv}}')">Корзина</button></td>
+                    </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+
+{% endblock %}
