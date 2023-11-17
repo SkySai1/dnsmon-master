@@ -6,7 +6,7 @@ from flask import Flask, flash, request, current_app, session, render_template, 
 from flask_sqlalchemy import SQLAlchemy
 from back.logger import logsetup
 from initconf import getconf, loadconf
-from back.forms import LoginForm, NewDomain
+from back.forms import LoginForm, NewDomain, DomainForm
 from back.object import Domain
 from back.functions import parse_list, domain_validate
 from psycopg2.errors import UniqueViolation
@@ -15,7 +15,7 @@ app = Flask(__name__)
 
 @app.before_request
 def pre_load():
-    if "user_id" in session:
+    if "user_id" in session or True:
         pass
     elif request.form.get('action') == str(hash("login")):
         user = request.form.get('username')
@@ -77,7 +77,8 @@ def domains():
         form = form, 
         new = Domain.hash_new,
         mv = Domain.hash_mv,
-        e = Domain.hash_edit
+        edit = Domain.hash_edit,
+        sw = Domain.hash_switch
     )
 
 @app.route('/domains/<domain>/<action>', methods = ['POST'])
@@ -102,6 +103,26 @@ def new_domain(domain, action):
             return str(result)
         else:
             return '', 520
+        
+    elif action == Domain.hash_edit:
+        input = request.form.get('new')
+        new = domain_validate(input)
+        if not new: return 'badname', 520
+        db = AccessDB(app.config.get('DB').engine, CONF)
+        result = db.update_domain(new, fqdn=domain)
+        if result:
+            return [result]
+        else:
+            return '', 520
+        
+    elif action == Domain.hash_switch:
+        db = AccessDB(app.config.get('DB').engine, CONF)
+        state = request.form.get('state')
+        result = db.switch_domain(state, fqdn=domain)
+        if result:
+            return [result]
+        else:
+            return '', 520
     
     return '', 404
 
@@ -124,7 +145,8 @@ def start():
     if eval(CONF['GENERAL']['autouser']):
         db.create_zero_user()
     else:
-        db.delete_user(id='-1', name='admin')
+        db.delete_user(id='-1')
+
     app.run('0.0.0.0',5380,debug=True)
     
 

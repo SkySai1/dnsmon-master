@@ -91,6 +91,7 @@ class DomainsList(Base):
     __tablename__ = "domains_list"
     id = Column(Integer, primary_key=True)
     fqdn = Column(String(255), nullable=False, unique=True)
+    active = Column(Boolean, default=True)
 
 
 class Domains(Base):  
@@ -280,7 +281,37 @@ class AccessDB:
                 return result
         except Exception as e:
             logging.error('Remove domain list in database is fail', exc_info=(logging.DEBUG >= logging.root.level))
-            return None      
+            return None
+              
+    def update_domain(self, new:str, id:int=None, fqdn:str=None):
+        try:
+            where = []
+            if id: where.append(DomainsList.id == id)
+            if fqdn: where.append(DomainsList.fqdn == fqdn)
+            with Session(self.engine) as conn:
+                stmt = update(DomainsList).filter(*where).values(fqdn = new).returning(DomainsList.fqdn)
+                result = conn.scalars(stmt).one_or_none()
+                conn.commit()
+                return result
+        except Exception as e:
+            logging.error('Update domains in database is fail', exc_info=(logging.DEBUG >= logging.root.level))
+            return False
+             
+    def switch_domain(self, state:bool|str, id:int=None, fqdn:str=None):
+        try:
+            if state.lower() == "true": state = True
+            elif state.lower() == "false": state = False
+            where = []
+            if id: where.append(DomainsList.id == id)
+            if fqdn: where.append(DomainsList.fqdn == fqdn)
+            with Session(self.engine) as conn:
+                stmt = update(DomainsList).filter(*where).values(active = state)
+                conn.execute(stmt)
+                conn.commit()
+                return True
+        except Exception as e:
+            logging.error('Switch domains in database is fail', exc_info=(logging.DEBUG >= logging.root.level))
+            return False      
 
     def get_geobase(self):
         try:

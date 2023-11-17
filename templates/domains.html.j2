@@ -20,10 +20,13 @@
         </div>
         <div>
             <table id="d_list">
-                {% for domain, id in domains %}
+                {% for domain, id, state in domains %}
                     <tr>
-                        <td>{{loop.index0 + 1}}</td><td id="{{id}}">{{domain}}</td>
-                        <td><button>Ручка</button></td><td><button onclick="mv_domain($('#{{id}}').text(), '{{mv}}')">Корзина</button></td>
+                        <td>{{loop.index0 + 1}}</td>
+                        <td><input type="checkbox" {% if state %} checked {% endif %} onchange="console.log(switch_domain('{{domain}}', '{{sw}}', this.checked))"/></td>
+                        <td><input id="d-{{id}}" value="{{domain}}" disabled></td>
+                        <td><button id="d-ch-{{id}}" onclick="edit_domain('d-{{id}}', this, '{{edit}}')">Ручка</button></td>
+                        <td><button onclick="mv_domain('{{domain}}', '{{mv}}')">Корзина</button></td>
                     </tr>
                 {% endfor %}
             </table>
