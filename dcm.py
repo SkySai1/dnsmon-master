@@ -90,7 +90,11 @@ def new_domain(domain, action):
         db = AccessDB(app.config.get('DB').engine, CONF)
         result = db.new_domain(domain)
         if result and type(result) is str:
-            return [result]
+            return {
+                "domain": result,
+                "remove": Domain.hash_mv,  
+                "edit": Domain.hash_edit, 
+                "switch": Domain.hash_switch}
         elif result is UniqueViolation:
             return 'exist', 520
         else: 

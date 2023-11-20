@@ -250,7 +250,7 @@ class AccessDB:
             if id: where.append(Users.id == id)
             if fqdn: where.append(Users.email == fqdn)
             with Session(self.engine) as conn:
-                result = conn.execute(select(DomainsList).filter(*where)).fetchall()
+                result = conn.execute(select(DomainsList).filter(*where).order_by(DomainsList.fqdn)).fetchall()
                 return result
         except Exception as e:
             logging.error('Get domains list from database is fail', exc_info=(logging.DEBUG >= logging.root.level))
