@@ -1,19 +1,40 @@
-function create_domain_row(domain, remove, edit, sw, state){
-  if (!state || state == true) {
+function get_all_domains(remove, edit, sw){
+  $.ajax({
+    url: '/domains',
+    method: 'POST',
+    dataType: 'json'
+  })    
+  .done(function(data) {
+    if (data){
+      for (row of data){
+        create_domain_row(row[0], row[1], row[2], remove, edit, sw)
+      }
+  }
+  })
+  .fail(function(data, s, e){
+
+  });  
+}
+
+
+function create_domain_row(domain, id, state, remove, edit, sw){
+  if (state == true || state == "True") {
     var checked = 'checked'
   } else {
     var checked = ''
+    var check = document.getElementById('d-sw-all');
+    check.checked = false;
   }
 
   var table = $('#d_list')
-  var row = $('<tr id="row_{{domain}}" class="row_d"></tr>')
-  var id = $('.row_d').length + 1
-  var number = $(`<td>${id}</td>`)
-  var active = $(`<td><input type="checkbox" ${checked} onchange="switch_domain('${domain}', '${sw}', this.checked)"/></td>`)
-  var name = $(`<td><input id="d-${id}" value="${domain}" disabled></td>`)
-  var edit = $(`<td><button id="d-ch-${id}" onclick="edit_domain('d-${id}', this, '${edit}')">Ручка</button></td>`)
+  var row = $(`<tr id="row_${domain}" class="row-d"></tr>`)
+  var pos = $('.row-d').length + 1
+  var number = $(`<td>${pos}</td>`)
+  var active = $(`<td><input class="d-sw" type="checkbox" ${checked} onchange="switch_domain('${domain}', '${sw}', this.checked)"/></td>`)
+  var name = $(`<td><input id="d_${pos}" value="${domain}" disabled></td>`)
+  var edit = $(`<td><button id="d-ch_${pos}" onclick="edit_domain('d_${pos}', this, '${edit}')">Ручка</button></td>`)
   var trash = $(`<td><button onclick="mv_domain('${id}', '${remove}')">Корзина</button></td>`)
-  var select = $(`<td><input id="check_d-${id}" type="checkbox"></td>`)
+  var select = $(`<td><input id="sel-d_${id}" class="sel-d-all" type="checkbox"></td>`)
 
   row.append(number)
   row.append(active)
@@ -39,7 +60,7 @@ function new_domain(data, action, isimport){
         if (!isimport){
           //location.reload();
         }
-        create_domain_row(data['domain'], data['remove'], data['edit'], data['switch'])
+        create_domain_row(data['domain'], data['id'], true, data['remove'], data['edit'], data['switch'])
         resolve(data)
           //$('#d_list').prepend(`<tr><td>-</td><td>${data}</td></tr>`)
       })
@@ -62,8 +83,7 @@ function new_domain(data, action, isimport){
     return request
 };
 
-function mv_domain(id, action){
-  what = $(`#d-${id}`).val()
+function mv_domain(what, action){
   $.ajax({
     url: '/domains/' + what + '/' + action,
     method: 'POST',
@@ -71,7 +91,9 @@ function mv_domain(id, action){
     data: [what],
   })    
   .done(function(data) {
-    $(`#d-${id}`).parent().parent().remove()
+    domain = data[0]
+    row = document.getElementById(`row_${domain}`)
+    row.remove()
   })
   .fail(function(data, s, e){
 
@@ -79,6 +101,7 @@ function mv_domain(id, action){
 };
 
 function switch_domain(what, action, state){
+  
   $.ajax({
     url: '/domains/' + what + '/' + action,
     method: 'POST',
@@ -86,7 +109,19 @@ function switch_domain(what, action, state){
     data: {"state": state},
   })    
   .done(function(data) {
-
+    if (what == '*') {
+      $('.d-sw').each(function(i, obj){
+        obj.checked = state;
+      })
+    } else {
+      var check = true
+      $('.d-sw').each(function(i, obj){
+        if (obj.checked == false){
+          console.log(obj.checked)
+          check = false}
+      })
+      document.getElementById('d-sw-all').checked = check;     
+    }
   })
   .fail(function(data, s, e){
 
@@ -94,6 +129,7 @@ function switch_domain(what, action, state){
 };
 
 function edit_domain(field_id, button, action){
+  console.log(field_id)
   field = $(`#${field_id}`)
   var what =  field.attr("value")
   if (field.attr('disabled')) {
@@ -128,7 +164,7 @@ function edit_domain(field_id, button, action){
 function search_domain(field) {
   var origin = $(field).val().toLowerCase()
   var pattern = new RegExp(origin, 'g')
-  $('.row_d').each(function () {
+  $('.row-d').each(function () {
     var id = this.id.replace("row_",'')
     if (!id.match(pattern)) {
       $(this).css("display", "none");
@@ -154,7 +190,7 @@ function import_domain(input, action){
         promises.push(new_domain(data, action, true));
         }
       Promise.all(promises)
-        .then(result => {location.reload()})
+        .then(result => {})
         .catch(error => {
             if (error == 'exist')
             var text = $("#hmsg").text()
@@ -166,4 +202,19 @@ function import_domain(input, action){
     }
 
   reader.readAsText(file)
+}
+
+function remove_selected_domains(action){
+  $('.sel-d-all').each(function(i, obj){
+    if (obj.checked == true){
+      var id = this.id.replace("sel-d_",'')
+      mv_domain(id, action)
+    }
+  })  
+}
+
+function select_domains(state){
+  $('.sel-d-all').each(function(i, obj){
+    obj.checked = state
+  })
 }

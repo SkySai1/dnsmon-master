@@ -71,27 +71,38 @@ def domains():
     data = db.get_domains()
     d_list = parse_list(data)
     form = NewDomain()
-    return render_template(
-        'domains.html.j2', 
-        domains = d_list, 
-        form = form, 
-        new = Domain.hash_new,
-        mv = Domain.hash_mv,
-        edit = Domain.hash_edit,
-        sw = Domain.hash_switch
-    )
+    if request.method == 'POST':
+        return d_list
+    else:
+        return render_template(
+            'domains.html.j2', 
+            domains = d_list, 
+            form = form, 
+            new = Domain.hash_new,
+            remove = Domain.hash_mv,
+            edit = Domain.hash_edit,
+            switch = Domain.hash_switch
+        )
 
 @app.route('/domains/<domain>/<action>', methods = ['POST'])
 def new_domain(domain, action):
-    domain = domain_validate(domain)
-    if not domain: return '', 500
+    try:
+        id = int(domain)
+        domain = None
+    except:
+        id = None
+        if not domain: return '', 500
+        if domain == '*': domain = None
+        else: domain = domain_validate(domain)
 
     if action == Domain.hash_new:
         db = AccessDB(app.config.get('DB').engine, CONF)
+        if not domain: return 'empty', 520
         result = db.new_domain(domain)
-        if result and type(result) is str:
+        if result and type(result) is tuple:
             return {
-                "domain": result,
+                "domain": result[1],
+                "id": result[0],
                 "remove": Domain.hash_mv,  
                 "edit": Domain.hash_edit, 
                 "switch": Domain.hash_switch}
@@ -102,18 +113,19 @@ def new_domain(domain, action):
         
     elif action == Domain.hash_mv:
         db = AccessDB(app.config.get('DB').engine, CONF)
-        result = db.remove_domains(fqdn=domain)
+        result = db.remove_domains(id=id, fqdn=domain)
         if result:
-            return str(result)
+            return [result]
         else:
             return '', 520
         
     elif action == Domain.hash_edit:
+        if not domain: return 'empty', 520
         input = request.form.get('new')
         new = domain_validate(input)
         if not new: return 'badname', 520
         db = AccessDB(app.config.get('DB').engine, CONF)
-        result = db.update_domain(new, fqdn=domain)
+        result = db.update_domain(new, id=id, fqdn=domain)
         if result:
             return [result]
         else:
@@ -122,7 +134,7 @@ def new_domain(domain, action):
     elif action == Domain.hash_switch:
         db = AccessDB(app.config.get('DB').engine, CONF)
         state = request.form.get('state')
-        result = db.switch_domain(state, fqdn=domain)
+        result = db.switch_domain(state, id=id, fqdn=domain)
         if result:
             return [result]
         else:

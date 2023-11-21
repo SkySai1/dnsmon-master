@@ -3,6 +3,7 @@
 {% block head %}
     {{ super() }}
     <script type="text/javascript" src="static/js/domains.js"></script>
+    <script> window.onload = get_all_domains('{{remove}}', '{{edit}}', '{{switch}}')</script>
     <style>
     </style>
 {% endblock %}
@@ -28,21 +29,24 @@
             <hr>
             <table id="d_list">
                 <tr>
-                    <td></td><td><input type="checkbox"></td>
-                    <td></td><td></td><td></td>
-                    <td><input id="check_d_all" type="checkbox"></td>
+                    <td></td><td><input id="d-sw-all" type="checkbox" checked onchange="switch_domain('*', '{{switch}}', this.checked)"></td>
+                    <td></td><td></td>
+                    <td><button onclick="remove_selected_domains('{{remove}}')">Много корзин</button></td>
+                    <td><input id="check_d_all" type="checkbox" onchange="select_domains(this.checked)"></td>
                 </tr>
                 
                 {% for domain, id, state in domains %}
-                <script> </script>
+                    {#
+                    <script> create_domain_row('{{domain}}', '{{id}}', '{{state}}', '{{remove}}', '{{edit}}', '{{switch}}') </script>
                     <tr id="row_{{domain}}" class="row_d">
                         <td>{{loop.index0 + 1}}</td>
-                        <td><input type="checkbox" {% if state %} checked {% endif %} onchange="console.log(switch_domain('{{domain}}', '{{sw}}', this.checked))"/></td>
+                        <td><input class='d-sw' type="checkbox" {% if state %} checked {% endif %} onchange="switch_domain('{{domain}}', '{{sw}}', this.checked))"/></td>
                         <td><input id="d-{{loop.index0 + 1}}" value="{{domain}}" disabled></td>
                         <td><button id="d-ch-{{id}}" onclick="edit_domain('d-{{loop.index0 + 1}}', this, '{{edit}}')">Ручка</button></td>
                         <td><button onclick="mv_domain('{{loop.index0 + 1}}', '{{mv}}')">Корзина</button></td>
                         <td><input id="check_d-{{loop.index0 + 1}}" type="checkbox"></td>
                     </tr>
+                    #}
                 {% endfor %}
             </table>
         </div>

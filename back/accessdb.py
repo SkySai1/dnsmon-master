@@ -256,15 +256,18 @@ class AccessDB:
             logging.error('Get domains list from database is fail', exc_info=(logging.DEBUG >= logging.root.level))
             return None
         
-    def new_domain(self, fqdn:str=None):
+    def new_domain(self, fqdn:str):
         try:
+            
             with Session(self.engine) as conn:
                 if conn.execute(select(DomainsList).filter(DomainsList.fqdn == fqdn)).fetchone():
                     return UniqueViolation
-                stmt = insert(DomainsList).values(fqdn = fqdn).returning(DomainsList.fqdn)
-                result = conn.scalars(stmt).one_or_none()
+                stmt = insert(DomainsList).values(fqdn = fqdn).returning(DomainsList)
+                data = conn.scalars(stmt).fetchmany()
                 conn.commit()
-                return result
+                for obj in data:
+                    return obj.id, obj.fqdn
+                return None, None
         except Exception as e:
             logging.error('Add domain into database is fail', exc_info=(logging.DEBUG >= logging.root.level))
             return ''
@@ -275,7 +278,7 @@ class AccessDB:
             if id: where.append(DomainsList.id == id)
             if fqdn: where.append(DomainsList.fqdn == fqdn)
             with Session(self.engine) as conn:
-                stmt = delete(DomainsList).filter(*where).returning(DomainsList.id)
+                stmt = delete(DomainsList).filter(*where).returning(DomainsList.fqdn)
                 result = conn.scalars(stmt).one()
                 conn.commit()
                 return result
