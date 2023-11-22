@@ -1,5 +1,7 @@
 import secrets
 
+class BadName(Exception): ...
+
 class Domain:
     hash_new = None
     hash_mv = None

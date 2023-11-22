@@ -7,7 +7,7 @@ from flask_sqlalchemy import SQLAlchemy
 from back.logger import logsetup
 from initconf import getconf, loadconf
 from back.forms import LoginForm, NewDomain, DomainForm
-from back.object import Domain
+from back.object import Domain, BadName
 from back.functions import parse_list, domain_validate
 from psycopg2.errors import UniqueViolation
 
@@ -93,7 +93,10 @@ def new_domain(domain, action):
         id = None
         if not domain: return '', 500
         if domain == '*': domain = None
-        else: domain = domain_validate(domain)
+        else: 
+            domain = domain_validate(domain)
+            if domain is BadName:
+                return 'badname', 520
 
     if action == Domain.hash_new:
         db = AccessDB(app.config.get('DB').engine, CONF)

@@ -65,25 +65,17 @@ function new_domain(data, action, isimport){
           //$('#d_list').prepend(`<tr><td>-</td><td>${data}</td></tr>`)
       })
       .fail(function(data, s, e){
-        if (!isimport){
-          if (data.responseText == 'exist') {
-            $("#message").text("Домен уже существует");
-          };
-        } else {
-          if (data.responseText == 'exist') {
-            $("#hmsg").append(document.createTextNode(`${domain} уже существует\n`));
-            
-          };
-          try {reject(data.responseText)}     
-          catch {};
-        }
-        
+        var message = $("#message")
+        switch (data.responseText) {
+          case 'exist': message.append(`${domain} уже существует\n`); break;
+          case 'badname': message.append(`${domain} - неккоректное DNS имя\n`); break;
+          default: break;}
       })}
       )
     return request
 };
 
-function mv_domain(what, action){
+async function mv_domain(what, action){
   $.ajax({
     url: '/domains/' + what + '/' + action,
     method: 'POST',
@@ -191,13 +183,7 @@ function import_domain(input, action){
         }
       Promise.all(promises)
         .then(result => {})
-        .catch(error => {
-            if (error == 'exist')
-            var text = $("#hmsg").text()
-            if (text) {
-              alert(text)
-            }
-          })
+        .catch(error => {})
       }
     }
 
@@ -205,12 +191,15 @@ function import_domain(input, action){
 }
 
 function remove_selected_domains(action){
-  $('.sel-d-all').each(function(i, obj){
-    if (obj.checked == true){
-      var id = this.id.replace("sel-d_",'')
-      mv_domain(id, action)
-    }
-  })  
+  var array = $('.sel-d-all').map(function(){
+    if (this.checked){
+    return this};
+  }).get()
+  array.forEach(async (item) => {
+    var id = item.id.replace("sel-d_",'')
+    await mv_domain(id, action)
+  });
+  document.getElementById('check_d_all').checked = false;
 }
 
 function select_domains(state){
