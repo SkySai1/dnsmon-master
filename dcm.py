@@ -9,7 +9,7 @@ from initconf import getconf, loadconf
 from back.forms import LoginForm, NewDomain, DomainForm, NewZone
 from back.object import Domain, BadName, Zones
 from back.functions import parse_list, domain_validate
-from back.worker import add_object, remove_object
+from back.worker import add_object, edit_object, remove_object, switch_object
 from psycopg2.errors import UniqueViolation
 
 app = Flask(__name__)
@@ -100,29 +100,9 @@ def domain_action(domain, action):
                 return 'badname', 520
 
     if action == Domain.hash_new: return add_object(app, domain, 'd')
-        
     elif action == Domain.hash_mv: return remove_object(app, id, 'd')
-        
-    elif action == Domain.hash_edit:
-        if not domain: return 'empty', 520
-        input = request.form.get('new')
-        new = domain_validate(input)
-        if not new: return 'badname', 520
-        db = AccessDB(app.config.get('DB').engine, CONF)
-        result = db.update_domain(new, id=id, fqdn=domain)
-        if result:
-            return [result]
-        else:
-            return '', 520
-        
-    elif action == Domain.hash_switch:
-        db = AccessDB(app.config.get('DB').engine, CONF)
-        state = request.form.get('state')
-        result = db.switch_domain(state, id=id, fqdn=domain)
-        if result:
-            return [result]
-        else:
-            return '', 520
+    elif action == Domain.hash_edit: return edit_object(app, domain, 'd') 
+    elif action == Domain.hash_switch: return switch_object(app, domain, 'd')
     
     return '', 404
 

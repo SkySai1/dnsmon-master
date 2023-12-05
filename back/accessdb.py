@@ -279,7 +279,7 @@ class AccessDB:
             if id: where.append(DomainsList.id == id)
             if fqdn: where.append(DomainsList.fqdn == fqdn)
             with Session(self.engine) as conn:
-                stmt = delete(DomainsList).filter(*where).returning(DomainsList.fqdn)
+                stmt = delete(DomainsList).filter(*where).returning(DomainsList.id)
                 result = conn.scalars(stmt).one()
                 conn.commit()
                 return result
@@ -368,4 +368,33 @@ class AccessDB:
         except Exception as e:
             logging.error('Remove zone from zonelist in database is fail', exc_info=(logging.DEBUG >= logging.root.level))
             return None
-    
+
+    def update_zone(self, new:str, id:int=None, fqdn:str=None):
+        try:
+            where = []
+            if id: where.append(ZonesList.id == id)
+            if fqdn: where.append(ZonesList.fqdn == fqdn)
+            with Session(self.engine) as conn:
+                stmt = update(ZonesList).filter(*where).values(fqdn = new).returning(ZonesList.fqdn)
+                result = conn.scalars(stmt).one_or_none()
+                conn.commit()
+                return result
+        except Exception as e:
+            logging.error('Update zone in database is fail', exc_info=(logging.DEBUG >= logging.root.level))
+            return False
+
+    def switch_zone(self, state:bool|str, id:int=None, fqdn:str=None):
+        try:
+            if state.lower() == "true": state = True
+            elif state.lower() == "false": state = False
+            where = []
+            if id: where.append(ZonesList.id == id)
+            if fqdn: where.append(ZonesList.fqdn == fqdn)
+            with Session(self.engine) as conn:
+                stmt = update(ZonesList).filter(*where).values(active = state)
+                conn.execute(stmt)
+                conn.commit()
+                return True
+        except Exception as e:
+            logging.error('Switch zone in database is fail', exc_info=(logging.DEBUG >= logging.root.level))
+            return False   
