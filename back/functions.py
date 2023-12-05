@@ -31,3 +31,4 @@ def domain_validate(input:str):
    except:
       logging.debug(f"{input} is a bad DNS name", exc_info=(logging.DEBUG >= logging.root.level))
       return BadName
+

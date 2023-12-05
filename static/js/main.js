@@ -1,13 +1,13 @@
-function get_all_domains(remove, edit, sw){
+function get_all(what, remove, edit, sw){
   $.ajax({
-    url: '/domains',
+    url: what,
     method: 'POST',
     dataType: 'json'
   })    
   .done(function(data) {
     if (data){
       for (row of data){
-        create_domain_row(row[0], row[1], row[2], remove, edit, sw)
+        create_row(row[0], row[1], row[2], remove, edit, sw)
       }
   }
   })
@@ -17,24 +17,24 @@ function get_all_domains(remove, edit, sw){
 }
 
 
-function create_domain_row(domain, id, state, remove, edit, sw){
+function create_row(object, id, state, remove, edit, sw){
   if (state == true || state == "True") {
     var checked = 'checked'
   } else {
     var checked = ''
-    var check = document.getElementById('d-sw-all');
+    var check = document.getElementById('o-sw-all');
     check.checked = false;
   }
 
-  var table = $('#d_list')
-  var row = $(`<tr id="row_${domain}" class="row-d"></tr>`)
-  var pos = $('.row-d').length + 1
+  var table = $('#o_list')
+  var row = $(`<tr id="row_${object}" class="row-o"></tr>`)
+  var pos = $('.row-o').length + 1
   var number = $(`<td>${pos}</td>`)
-  var active = $(`<td><input class="d-sw" type="checkbox" ${checked} onchange="switch_domain('${domain}', '${sw}', this.checked)"/></td>`)
-  var name = $(`<td><input id="d_${pos}" value="${domain}" disabled></td>`)
-  var edit = $(`<td><button id="d-ch_${pos}" onclick="edit_domain('d_${pos}', this, '${edit}')">Ручка</button></td>`)
-  var trash = $(`<td><button onclick="mv_domain('${id}', '${remove}')">Корзина</button></td>`)
-  var select = $(`<td><input id="sel-d_${id}" class="sel-d-all" type="checkbox"></td>`)
+  var active = $(`<td><input class="o-sw" type="checkbox" ${checked} onchange="switch_object('${object}', '${sw}', this.checked)"/></td>`)
+  var name = $(`<td><input id="o_${pos}" value="${object}" disabled></td>`)
+  var edit = $(`<td><button id="o-ch_${pos}" onclick="edit_object('o_${pos}', this, '${edit}')">Ручка</button></td>`)
+  var trash = $(`<td><button onclick="mv_object('${id}', '${remove}')">Корзина</button></td>`)
+  var select = $(`<td><input id="sel-o_${id}" class="sel-o-all" type="checkbox"></td>`)
 
   row.append(number)
   row.append(active)
@@ -47,11 +47,11 @@ function create_domain_row(domain, id, state, remove, edit, sw){
 }
 
 
-function new_domain(data, action, isimport){
+function new_object(what, data, action, isimport){
       $("#message").text('');
-      var domain = data[0]['value']
+      var object = data[0]['value']
       var request = new Promise(function(resolve, reject) {$.ajax({
-        url: '/domains/' + domain + '/' + action,
+        url: what + '/' + object + '/' + action,
         method: 'POST',
         dataType: 'json',
         data: data,
@@ -60,15 +60,15 @@ function new_domain(data, action, isimport){
         if (!isimport){
           //location.reload();
         }
-        create_domain_row(data['domain'], data['id'], true, data['remove'], data['edit'], data['switch'])
+        create_row(data['object'], data['id'], true, data['remove'], data['edit'], data['switch'])
         resolve(data)
           //$('#d_list').prepend(`<tr><td>-</td><td>${data}</td></tr>`)
       })
       .fail(function(data, s, e){
         var message = $("#message")
         switch (data.responseText) {
-          case 'exist': message.append(`${domain} уже существует\n`); break;
-          case 'badname': message.append(`${domain} - неккоректное DNS имя\n`); break;
+          case 'exist': message.append(`${object} уже существует\n`); break;
+          case 'badname': message.append(`${object} - неккоректное DNS имя\n`); break;
           default: break;}
       })}
       )
@@ -92,7 +92,7 @@ async function mv_domain(what, action){
   });
 };
 
-function switch_domain(what, action, state){
+function switch_object(what, action, state){
   
   $.ajax({
     url: '/domains/' + what + '/' + action,
@@ -102,17 +102,17 @@ function switch_domain(what, action, state){
   })    
   .done(function(data) {
     if (what == '*') {
-      $('.d-sw').each(function(i, obj){
+      $('.o-sw').each(function(i, obj){
         obj.checked = state;
       })
     } else {
       var check = true
-      $('.d-sw').each(function(i, obj){
+      $('.o-sw').each(function(i, obj){
         if (obj.checked == false){
           console.log(obj.checked)
           check = false}
       })
-      document.getElementById('d-sw-all').checked = check;     
+      document.getElementById('o-sw-all').checked = check;     
     }
   })
   .fail(function(data, s, e){
@@ -156,7 +156,7 @@ function edit_domain(field_id, button, action){
 function search_domain(field) {
   var origin = $(field).val().toLowerCase()
   var pattern = new RegExp(origin, 'g')
-  $('.row-d').each(function () {
+  $('.row-o').each(function () {
     var id = this.id.replace("row_",'')
     if (!id.match(pattern)) {
       $(this).css("display", "none");
@@ -191,19 +191,19 @@ function import_domain(input, action){
 }
 
 function remove_selected_domains(action){
-  var array = $('.sel-d-all').map(function(){
+  var array = $('.sel-o-all').map(function(){
     if (this.checked){
     return this};
   }).get()
   array.forEach(async (item) => {
-    var id = item.id.replace("sel-d_",'')
+    var id = item.id.replace("sel-o_",'')
     await mv_domain(id, action)
   });
   document.getElementById('check_d_all').checked = false;
 }
 
 function select_domains(state){
-  $('.sel-d-all').each(function(i, obj){
+  $('.sel-o-all').each(function(i, obj){
     obj.checked = state
   })
 }

@@ -109,6 +109,7 @@ class ZonesList(Base):
     __tablename__ = "zones_list"
     id = Column(Integer, primary_key=True)
     fqdn = Column(String(255), nullable=False, unique=True)
+    active = Column(Boolean, default=True)
 
 class Zones(Base):
     __tablename__ = "zones"
@@ -247,8 +248,8 @@ class AccessDB:
     def get_domains(self, id:str=None, fqdn:str=None):
         try:
             where = []
-            if id: where.append(Users.id == id)
-            if fqdn: where.append(Users.email == fqdn)
+            if id: where.append(DomainsList.id == id)
+            if fqdn: where.append(DomainsList.fqdn == fqdn)
             with Session(self.engine) as conn:
                 result = conn.execute(select(DomainsList).filter(*where).order_by(DomainsList.fqdn)).fetchall()
                 return result
@@ -324,8 +325,47 @@ class AccessDB:
         except Exception as e:
             logging.error('Get geobase from database is fail', exc_info=(logging.DEBUG >= logging.root.level))
             return None
+    
+    def get_zones(self, id:str=None, fqdn:str=None):
+        try:
+            where = []
+            if id: where.append(ZonesList.id == id)
+            if fqdn: where.append(ZonesList.fqdn == fqdn)
+            with Session(self.engine) as conn:
+                result = conn.execute(select(ZonesList).filter(*where).order_by(ZonesList.fqdn)).fetchall()
+                return result
+        except Exception as e:
+            logging.error('Get zones list from database is fail', exc_info=(logging.DEBUG >= logging.root.level))
+            return None
 
 
+    def new_zone(self, fqdn:str):
+        try:
+            
+            with Session(self.engine) as conn:
+                if conn.execute(select(ZonesList).filter(ZonesList.fqdn == fqdn)).fetchone():
+                    return UniqueViolation
+                stmt = insert(ZonesList).values(fqdn = fqdn).returning(ZonesList)
+                data = conn.scalars(stmt).fetchmany()
+                conn.commit()
+                for obj in data:
+                    return obj.id, obj.fqdn
+                return None, None
+        except Exception as e:
+            logging.error('Add zone into database is fail', exc_info=(logging.DEBUG >= logging.root.level))
+            return ''
 
-
+    def remove_zone(self, id:str=None, fqdn:str=None):
+        try:
+            where = []
+            if id: where.append(ZonesList.id == id)
+            if fqdn: where.append(ZonesList.fqdn == fqdn)
+            with Session(self.engine) as conn:
+                stmt = delete(ZonesList).filter(*where).returning(ZonesList.fqdn)
+                result = conn.scalars(stmt).one()
+                conn.commit()
+                return result
+        except Exception as e:
+            logging.error('Remove zone from zonelist in database is fail', exc_info=(logging.DEBUG >= logging.root.level))
+            return None
     

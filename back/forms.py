@@ -10,6 +10,9 @@ class LoginForm(FlaskForm):
 class NewDomain(FlaskForm):
     domain = StringField('Домен', validators=[DataRequired()], render_kw={"placeholder": "Добавить домен"})
 
+class NewZone(FlaskForm):
+    zone = StringField('Зона', validators=[DataRequired()], render_kw={"placeholder": "Добавить зону"})
+
 class DomainForm(FlaskForm):
     state = BooleanField('Статус')
     domain = StringField('Домен', validators=[DataRequired()])
