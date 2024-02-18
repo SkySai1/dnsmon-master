@@ -18,7 +18,7 @@ def domains_page(app:Flask):
         return d_list
     else:
         return render_template(
-            'domains.html.j2', 
+            'domains.jinja', 
             domains = d_list, 
             form = form, 
             new = Domain.hash_new,

@@ -26,16 +26,16 @@ def before_request():
 
 @app.errorhandler(404)
 def page_not_found(e):
-    return render_template('404.html.j2'), 404
+    return render_template('404.jinja'), 404
 
 @app.errorhandler(405)
 def page_not_found(e):
-    return render_template('404.html.j2'), 404
+    return render_template('404.jinja'), 404
 
 
 @app.errorhandler(500)
 def internal_server_error(e):
-    return render_template('500.html.j2'), 500
+    return render_template('500.jinja'), 500
 
 @app.route('/login', methods=['GET','POST'])
 def login():
@@ -44,7 +44,7 @@ def login():
 @app.route('/')
 def index():
     ua = request.headers.get('User-Agent')
-    return render_template('index.html.j2', ua = ua, current_time=datetime.utcnow())
+    return render_template('index.jinja', ua = ua, current_time=datetime.utcnow())
 
 @app.route('/user/<name>')
 def user(name):

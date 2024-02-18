@@ -15,7 +15,7 @@ def zones_page(app:Flask):
     form = NewZone()
     if request.method == 'POST': return z_list
     return render_template(
-        'zones.html.j2', 
+        'zones.jinja', 
         zones = z_list, 
         form = form, 
         new = Zones.hash_new,

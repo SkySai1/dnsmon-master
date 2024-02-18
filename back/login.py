@@ -6,4 +6,4 @@ def login_page():
         return redirect('/')
     form = LoginForm()
     form.hidden_tag()
-    return render_template('login.html.j2', action = hash("login"), form=form)
+    return render_template('login.jinja', action = hash("login"), form=form)
