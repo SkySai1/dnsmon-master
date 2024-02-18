@@ -5,6 +5,7 @@ from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from back.domains import domains_action_worker, domains_page
 from back.login import login_page
+from back.zones import zones_action_worker, zones_page
 from initconf import ConfData, loadconf
 from back.logger import logsetup
 from back.forms import LoginForm, NewDomain, NewZone
@@ -59,68 +60,11 @@ def domain_action(domain, action):
 
 @app.route('/zones', methods=['GET','POST'])
 def zones():
-    appdb = app.config.get('DB')
-    db = AccessDB(appdb.engine)
-    data = db.get_zones()
-    z_list = parse_list(data)
-    form = NewZone()
-    if request.method == 'POST': return z_list
-    return render_template(
-        'zones.html.j2', 
-        zones = z_list, 
-        form = form, 
-        new = Zones.hash_new,
-        remove = Zones.hash_mv,
-        edit = Zones.hash_edit,
-        switch = Zones.hash_switch
-    )    
+    return zones_page(app)
 
 @app.route('/zones/<zone>/<action>', methods = ['POST'])
 def zone_action(zone, action):
-    try:
-        id = int(zone)
-        zone = None
-    except:
-        id = None
-        if not zone: return '', 500
-        if zone == '*': zone = None
-        else: 
-            zone = domain_validate(zone)
-            if zone is BadName:
-                return 'badname', 520
-
-    if action == Zones.hash_new: return add_object(app, zone, 'z')
-        
-    elif action == Domain.hash_mv:
-        db = AccessDB(app.config.get('DB').engine)
-        result = db.remove_domains(id=id, fqdn=zone)
-        if result:
-            return [result]
-        else:
-            return '', 520
-        
-    elif action == Domain.hash_edit:
-        if not zone: return 'empty', 520
-        input = request.form.get('new')
-        new = domain_validate(input)
-        if not new: return 'badname', 520
-        db = AccessDB(app.config.get('DB').engine)
-        result = db.update_domain(new, id=id, fqdn=zone)
-        if result:
-            return [result]
-        else:
-            return '', 520
-        
-    elif action == Domain.hash_switch:
-        db = AccessDB(app.config.get('DB').engine)
-        state = request.form.get('state')
-        result = db.switch_domain(state, id=id, fqdn=zone)
-        if result:
-            return [result]
-        else:
-            return '', 520
-    
-    return '', 404
+    return zones_action_worker(app, zone, action)
 
 
 @app.route('/t/<test>/')
