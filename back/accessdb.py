@@ -5,6 +5,7 @@ import uuid
 import sys
 import psycopg2
 from back.functions import randomword
+from initconf import ConfData as CD
 from hashlib import sha256
 from sqlalchemy.engine.base import Engine
 from sqlalchemy import CHAR, SmallInteger, TypeDecorator, engine, UUID, BigInteger, Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Text, ARRAY, exc, create_engine, delete, insert, select, or_, not_, update
@@ -15,7 +16,7 @@ from psycopg2.errors import UniqueViolation
 
 Base = declarative_base()
 
-def checkconnect(engine:engine.base.Engine, conf):
+def checkconnect(engine:engine.base.Engine):
     try:
         engine.connect()
         Base.metadata.create_all(engine)
@@ -24,14 +25,14 @@ def checkconnect(engine:engine.base.Engine, conf):
         logging.error("Fail to check database", exc_info=(logging.DEBUG >= logging.root.level))
         return False
 
-def enginer(_CONF):
+def enginer():
     try:  
         engine = create_engine(
-            f"postgresql+psycopg2://{_CONF['DATABASE']['dbuser']}:{_CONF['DATABASE']['dbpass']}@{_CONF['DATABASE']['dbhost']}:{int(_CONF['DATABASE']['dbport'])}/{_CONF['DATABASE']['dbname']}",
+            f"postgresql+psycopg2://{CD.database.user}:{CD.database.password}@{CD.database.host}:{CD.database.port}/{CD.database.dbname}",
             connect_args={'connect_timeout': 5},
             pool_pre_ping=True
         )
-        if checkconnect(engine, _CONF) is True:
+        if checkconnect(engine) is True:
             logging.debug(f"Created new database engine {engine.url}")
             return engine
         else: raise Exception()
@@ -187,10 +188,9 @@ class Logs(Base):
 
 class AccessDB:
 
-    def __init__(self, engine:engine, _CONF):
+    def __init__(self, engine:engine):
         self.engine = engine
-        self.conf = _CONF
-        self.timedelta = int(_CONF['GENERAL']['timedelta'])
+        self.timedelta = CD.general.timedelta
         self.c = Session(engine)
         logging.debug(f"Initialize new database connect '{engine.url}'")
     

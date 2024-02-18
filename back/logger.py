@@ -8,11 +8,12 @@ import re
 import struct
 import sys
 from multiprocessing import Pipe
-from logging import LogRecord, Handler, StreamHandler
+from logging import Handler
 from logging.handlers import RotatingFileHandler, DatagramHandler, DEFAULT_UDP_LOGGING_PORT
-import time
 from typing import Any
 from threading import Thread
+from initconf import ConfData
+
 
 
 def logserver(DEFAULT_UDP_LOGGING_PORT=DEFAULT_UDP_LOGGING_PORT):
@@ -27,34 +28,34 @@ def logserver(DEFAULT_UDP_LOGGING_PORT=DEFAULT_UDP_LOGGING_PORT):
     except Exception as e:
         print(e.with_traceback())
 
-def logsetup(CONF, DEFAULT_UDP_LOGGING_PORT=DEFAULT_UDP_LOGGING_PORT):
+def logsetup(DEFAULT_UDP_LOGGING_PORT=DEFAULT_UDP_LOGGING_PORT):
     try:
         reciever = None
-        if eval(CONF['LOGGING']['enable']):
-            size = str(CONF['LOGGING']['maxsize']).upper()
+        if ConfData.logging.enable is True:
+            size = ConfData.logging.maxsize
             if size[-1] == 'B': x = 1
             elif size[-1] == 'K': x = 1024
             elif size[-1] == 'M': x = 1024*1024
             elif size[-1] == 'G': x = 1024*1024*1024
             size = int(size[:-1]) * x
-            path = os.path.abspath(CONF['LOGGING']['pathway'])
-            minimum = str(CONF['LOGGING']['level'])
-            rotation = int(CONF['LOGGING']['rotation'])
-            timedelta = int(CONF['GENERAL']['timedelta'])
+            path = os.path.abspath(ConfData.logging.path)
+            minimum = ConfData.logging.level
+            rotation = ConfData.logging.rotation
+            timedelta = ConfData.general.timedelta
             if minimum.lower() not in ['debug','info','warning','error','critical']:
                 raise Exception
             
             socketHandler = DatagramHandler('127.0.0.80', DEFAULT_UDP_LOGGING_PORT)
             logging.root.addHandler(socketHandler)
-            logging.root.setLevel(minimum.upper())
+            logging.root.setLevel(minimum)
             logging.getLogger('asyncio').setLevel(logging.WARNING)
 
             mainlog = logging.getLogger('mainlog')
             mainlog.propagate = False
             logform = LogFormatter(timedelta, "%(asctime)s %(levelname)s %(processName)s - %(threadName)s:: %(message)s")
 
-            if CONF['LOGGING']['keeping'] in ["file", "both"]:
-                if eval(CONF['LOGGING']['separate']) is True:
+            if ConfData.logging.keeping in ["file", "both"]:
+                if ConfData.logging.separate is True:
                     seperate = {
                         '/debug_pyns.log':   logging.DEBUG,
                         '/info_pyns.log':    logging.INFO,
@@ -76,9 +77,9 @@ def logsetup(CONF, DEFAULT_UDP_LOGGING_PORT=DEFAULT_UDP_LOGGING_PORT):
                     
                     mainlog.addHandler(statement)
 
-            if CONF['LOGGING']['keeping'] in ["db", "both"]:
+            if ConfData.logging.keeping in ["db", "both"]:
                 reciever, sender = Pipe()
-                dbhandler = PipeHandler(sender, minimum.upper())
+                dbhandler = PipeHandler(sender, minimum)
                 dbhandler.setFormatter(logform)
                 mainlog.addHandler(dbhandler)
 
@@ -88,7 +89,7 @@ def logsetup(CONF, DEFAULT_UDP_LOGGING_PORT=DEFAULT_UDP_LOGGING_PORT):
 
         return reciever
     except Exception as e:
-        print(e)
+        print(e.with_traceback())
         logging.critical('Bad loging setup', exc_info=(logging.DEBUG >= logging.root.level))
         sys.exit(1)
     

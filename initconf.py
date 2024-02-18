@@ -1,4 +1,4 @@
-#!/etc/dnschecker-master/venv/bin/python3
+#!/home/dnscheck/dnsmon-master/venv/bin/python3
 import logging
 import os
 import configparser
@@ -8,10 +8,34 @@ import os, platform
 import ipaddress
 
 _OPTIONS ={
-    'GENERAL': ['listen-ip', 'listen-port', 'timedelta', 'autouser'],
-    'DATABASE': ['dbuser', 'dbpass', 'dbhost', 'dbport', 'dbname'],
-    'LOGGING' : ['enable', 'keeping', 'pathway' , 'level', 'separate', 'maxsize','rotation']
+    'GENERAL': ['listen', 'port', 'timedelta', 'autouser'],
+    'DATABASE': ['user', 'password', 'host', 'port', 'dbname'],
+    'LOGGING' : ['enable', 'keeping', 'path' , 'level', 'separate', 'maxsize','rotation']
 }
+
+class ConfData:
+    
+    class general:
+        listen = None
+        port = None
+        timedelta = None
+        autouser = None
+    
+    class database:
+        user = None
+        password = None
+        host = None
+        port = None
+        dbname = None
+    
+    class logging:
+        enable = None
+        keeping = None
+        path = None
+        level = None
+        separate = None
+        maxsize = None
+        rotation = None
 
 def loadconf():
     try:
@@ -23,10 +47,10 @@ def loadconf():
                 print('Missing config file at %s' % path)
         else:
             thisdir = os.path.dirname(os.path.abspath(__file__))
-            CONF, state = getconf(thisdir+'/config.ini')
+            state = getconf(thisdir+'/config.ini')
         if state is False:
             raise Exception()
-        return CONF
+        return True
     except:
         logging.critical('Error with manual start', exc_info=(logging.DEBUG >= logging.root.level))
         sys.exit(1)  
@@ -40,7 +64,10 @@ def getconf(path):
             for key in _OPTIONS[section]:
                 if config.has_option(section, key) is not True: bad.append(f'Bad config file: missing key - {key} in {section} section')
         if bad: raise Exception("\n".join(bad))
-        if checkconf(config) is True:
+
+        return makeconfdata(config)
+
+        if makeconf(config) is True:
             return config, True
         else:
             return None, False
@@ -48,42 +75,61 @@ def getconf(path):
         logging.critical(str(e))
         sys.exit(1)
 
-def checkconf(CONF:configparser.ConfigParser):
+
+def makeconfdata(CONF:configparser.ConfigParser):
     msg = []
     try:
         for s in CONF:
             for opt in CONF.items(s):
                 try:
-                    if opt[0] == 'listen-ip': ipaddress.ip_address(opt[1]).version == 4
-                    if opt[0] == 'listen-port': int(opt[1])
-                    if opt[0] == 'printstats': eval(opt[1])
-                    if opt[0] == 'autouser': eval(opt[1])
-                    if opt[0] == 'expire': float(opt[1])
-                    if opt[0] == 'scale': float(opt[1])
-                    if opt[0] == 'size': int(opt[1])
-                    if opt[0] == 'enable': eval(opt[1])
-                    if opt[0] == 'resolver' and opt[1] != '': ipaddress.ip_address(opt[1]).version == 4
-                    if opt[0] == 'maxdepth': int(opt[1])
-                    if opt[0] == 'timeout': float(opt[1])
-                    if opt[0] == 'retry': int(opt[1])
-                    if opt[0] == 'timesync': float(opt[1])
-                    if opt[0] == 'keeping':
-                        if opt[1] not in ['db', 'file', 'both']: raise Exception
-                    if opt[0] == 'pathway':   
-                        if not os.path.exists(opt[1]):
-                            try:
-                                os.mkdir(opt[1])
-                            except:
-                                msg.append(f"{s}: {opt[0]} = {opt[1]} <- dir do not exist")
-                        elif not os.access(opt[1], os.R_OK):
-                            msg.append(f"{s}: {opt[0]} = {opt[1]} <- dir without read access ")
-                    if opt[0] == 'level':
-                        if opt[1] not in ['debug', 'info', 'warning', 'error', 'critical']: raise Exception
-                    if opt[0] == 'maxsize':
-                        if not re.match('^[0-9]*[b|k|m|g]$', opt[1].lower()):raise Exception
-                    if opt[0] == 'rotation': int(opt[1])
-                    if opt[0] == 'download': eval(opt[1])
-                    if opt[0] == 'upload': eval(opt[1])
+                    if s.lower() == 'general':
+                        if opt[0] == 'listen': 
+                            ipaddress.ip_address(opt[1]).version == 4
+                            ConfData.general.listen = opt[1]
+                        if opt[0] == 'port': 
+                            ConfData.general.port = int(opt[1])
+                        if opt[0] == 'timedelta': 
+                            ConfData.general.timedelta = int(opt[1])
+                        if opt[0] == 'autouser': 
+                            ConfData.general.autouser = eval(opt[1])
+                        continue
+                    if s.lower() == 'database':
+                        if opt[0] == 'user':
+                            ConfData.database.user = opt[1]
+                        if opt[0] == 'password':
+                            ConfData.database.password = opt[1]
+                        if opt[0] == 'host':
+                            ConfData.database.host = opt[1]
+                        if opt[0] == 'port':
+                            ConfData.database.port = int(opt[1])
+                        if opt[0] == 'dbname':
+                            ConfData.database.dbname = opt[1]
+                        continue
+                    if s.lower() == 'logging':
+                        if opt[0] == 'enable':
+                            ConfData.logging.enable = eval(opt[1])
+                        if opt[0] == 'keeping':
+                            if opt[1].lower() not in ['db', 'file', 'both']: raise Exception
+                            else: ConfData.logging.keeping = opt[1].lower()
+                        if opt[0] == 'path':   
+                            if not os.path.exists(opt[1]):
+                                try:
+                                    os.mkdir(opt[1])
+                                except:
+                                    msg.append(f"{s}: {opt[0]} = {opt[1]} <- dir do not exist")
+                            elif not os.access(opt[1], os.R_OK):
+                                msg.append(f"{s}: {opt[0]} = {opt[1]} <- dir without read access ")
+                            ConfData.logging.path = opt[1]
+                        if opt[0] == 'level':
+                            if opt[1].lower() not in ['debug', 'info', 'warning', 'error', 'critical']: raise Exception
+                            else: ConfData.logging.level = opt[1].upper()
+                        if opt[0] == 'maxsize':
+                            if not re.match('^[0-9]*[b|k|m|g]$', opt[1].lower()):raise Exception
+                            else: ConfData.logging.maxsize = opt[1].upper()
+                        if opt[0] == 'separate':
+                            ConfData.logging.separate = eval(opt[1])
+                        if opt[0] == 'rotation': 
+                            ConfData.logging.rotation = int(opt[1])
                 except:
                     msg.append(f"{s}: {opt[0]} = {opt[1]} <- bad statetement")
                     continue
@@ -117,8 +163,8 @@ def deafultconf():
     DBPass = str(input('Input PASSWORD of your Data Base\'s user:\n'))
     DBName = str(input('Input BASENAME of your Data Base\n'))
     config['GENERAL'] = {
-        'listen-ip': '127.0.0.2',
-        'listen-port': 53,
+        'listen': '127.0.0.1',
+        'port': 8053,
         ";For mysql better keep timedelta as 0, for pgsql as your region timezone": None,
         'timedelta': 3,
         ";For auto creating zero super user ('admin'), in each start password will random = True":None,
@@ -126,10 +172,10 @@ def deafultconf():
         'autouser': True
     }
     config['DATABASE'] = {
-        'dbuser': DBUser,
-        'dbpass': DBPass,
-        'dbhost': DBHost,
-        'dbport': 5432,
+        'user': DBUser,
+        'password': DBPass,
+        'host': DBHost,
+        'port': 5432,
         'dbname': DBName,
     }
     config['LOGGING'] = {
@@ -141,7 +187,7 @@ def deafultconf():
         'keeping': 'both',
         "### Applying only with log keeping as in file or both ###":None, 
         ";Folder where is logfiles placing, actually while 'keeping' is file or both":None,
-        'pathway': './logs/' , 
+        'path': './logs/' , 
         ";Will separate log files by level = False|True":None, 
         'separate': True,
         ";Max size of each log file = 1048576B|1024K|1M|1G":None,

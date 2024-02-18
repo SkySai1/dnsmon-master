@@ -1,29 +1,30 @@
-#!/etc/dnschecker-master/venv/bin/python3
+#!/home/dnscheck/dnsmon-master/venv/bin/python3
 import secrets
-from datetime import datetime
-from back.accessdb import AccessDB, enginer
-from flask import Flask, flash, request, current_app, session, render_template, redirect, url_for
+from flask import Flask, flash, request, session, render_template, redirect
 from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
+from initconf import ConfData, loadconf
 from back.logger import logsetup
-from initconf import getconf, loadconf
-from back.forms import LoginForm, NewDomain, DomainForm, NewZone
+from back.forms import LoginForm, NewDomain, NewZone
+from back.accessdb import AccessDB, enginer
 from back.object import Domain, BadName, Zones
 from back.functions import parse_list, domain_validate
 from back.worker import add_object, edit_object, remove_object, switch_object
-from psycopg2.errors import UniqueViolation
 
 app = Flask(__name__)
 
 @app.before_request
 def pre_load():
-    if "user_id" in session or True:
+    if "user_id" in session:
+        pass
+    elif request.path in ['/static/css/login.css']:
         pass
     elif request.form.get('action') == str(hash("login")):
         user = request.form.get('username')
         passwd = request.form.get('password')
         if user and passwd:
             appdb = app.config.get('DB')
-            db = AccessDB(appdb.engine, CONF)
+            db = AccessDB(appdb.engine)
             user_id = db.get_userid(user, passwd)
             if user_id: 
                 session.update(user_id = user_id[0])
@@ -33,7 +34,6 @@ def pre_load():
                 return login()
     else:
         return login()
-    pass
 
 @app.errorhandler(404)
 def page_not_found(e):
@@ -68,7 +68,7 @@ def user(name):
 @app.route('/domains', methods=['GET','POST'])
 def domains():
     appdb = app.config.get('DB')
-    db = AccessDB(appdb.engine, CONF)
+    db = AccessDB(appdb.engine)
     data = db.get_domains()
     d_list = parse_list(data)
     form = NewDomain()
@@ -110,22 +110,20 @@ def domain_action(domain, action):
 @app.route('/zones', methods=['GET','POST'])
 def zones():
     appdb = app.config.get('DB')
-    db = AccessDB(appdb.engine, CONF)
+    db = AccessDB(appdb.engine)
     data = db.get_zones()
     z_list = parse_list(data)
     form = NewZone()
-    if request.method == 'POST':
-        return z_list
-    else:
-        return render_template(
-            'zones.html.j2', 
-            zones = z_list, 
-            form = form, 
-            new = Zones.hash_new,
-            remove = Zones.hash_mv,
-            edit = Zones.hash_edit,
-            switch = Zones.hash_switch
-        )    
+    if request.method == 'POST': return z_list
+    return render_template(
+        'zones.html.j2', 
+        zones = z_list, 
+        form = form, 
+        new = Zones.hash_new,
+        remove = Zones.hash_mv,
+        edit = Zones.hash_edit,
+        switch = Zones.hash_switch
+    )    
 
 @app.route('/zones/<zone>/<action>', methods = ['POST'])
 def zone_action(zone, action):
@@ -144,7 +142,7 @@ def zone_action(zone, action):
     if action == Zones.hash_new: return add_object(app, zone, 'z')
         
     elif action == Domain.hash_mv:
-        db = AccessDB(app.config.get('DB').engine, CONF)
+        db = AccessDB(app.config.get('DB').engine)
         result = db.remove_domains(id=id, fqdn=zone)
         if result:
             return [result]
@@ -156,7 +154,7 @@ def zone_action(zone, action):
         input = request.form.get('new')
         new = domain_validate(input)
         if not new: return 'badname', 520
-        db = AccessDB(app.config.get('DB').engine, CONF)
+        db = AccessDB(app.config.get('DB').engine)
         result = db.update_domain(new, id=id, fqdn=zone)
         if result:
             return [result]
@@ -164,7 +162,7 @@ def zone_action(zone, action):
             return '', 520
         
     elif action == Domain.hash_switch:
-        db = AccessDB(app.config.get('DB').engine, CONF)
+        db = AccessDB(app.config.get('DB').engine)
         state = request.form.get('state')
         result = db.switch_domain(state, id=id, fqdn=zone)
         if result:
@@ -181,25 +179,24 @@ def test(test=None):
     return test
 
 def start():
-    logreciever = logsetup(CONF)
-    engine = enginer(CONF)
+    logreciever = logsetup()
+    engine = enginer()
     app.config['SECRET_KEY'] = secrets.token_hex()
     app.config['SQLALCHEMY_DATABASE_URI'] = engine.url
     app.config['DB'] = SQLAlchemy(app)
-    app.config['CONF'] = CONF
-    db = AccessDB(engine, CONF)
+    db = AccessDB(engine)
 
     Domain.setup()
     Zones.setup()
 
-    if eval(CONF['GENERAL']['autouser']):
+    if ConfData.general.autouser is True:
         db.create_zero_user()
     else:
         db.delete_user(id='-1')
 
-    app.run('0.0.0.0',5380,debug=True)
+    app.run(ConfData.general.listen,ConfData.general.port,debug=True)
     
 
 if __name__ == "__main__":
-    CONF = loadconf()
-    start()
+    if loadconf() is True:
+        start()
