@@ -3,6 +3,7 @@ import secrets
 from flask import Flask, flash, request, session, render_template, redirect
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
+from back.login import login_page
 from initconf import ConfData, loadconf
 from back.logger import logsetup
 from back.forms import LoginForm, NewDomain, NewZone
@@ -36,11 +37,7 @@ def internal_server_error(e):
 
 @app.route('/login', methods=['GET','POST'])
 def login():
-    if "user_id" in session:
-        return redirect('/')
-    form = LoginForm()
-    form.hidden_tag()
-    return render_template('login.html.j2', action = hash("login"), form=form)
+    return login_page()
 
 @app.route('/')
 def index():
