@@ -3,6 +3,7 @@ import secrets
 from flask import Flask, flash, request, session, render_template, redirect
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
+from back.domains import domains_action_worker, domains_page
 from back.login import login_page
 from initconf import ConfData, loadconf
 from back.logger import logsetup
@@ -50,45 +51,11 @@ def user(name):
 
 @app.route('/domains', methods=['GET','POST'])
 def domains():
-    appdb = app.config.get('DB')
-    db = AccessDB(appdb.engine)
-    data = db.get_domains()
-    d_list = parse_list(data)
-    form = NewDomain()
-    if request.method == 'POST':
-        return d_list
-    else:
-        return render_template(
-            'domains.html.j2', 
-            domains = d_list, 
-            form = form, 
-            new = Domain.hash_new,
-            remove = Domain.hash_mv,
-            edit = Domain.hash_edit,
-            switch = Domain.hash_switch
-        )
+    return domains_page(app)
 
 @app.route('/domains/<domain>/<action>', methods = ['POST'])
 def domain_action(domain, action):
-    try:
-        id = int(domain)
-        domain = None
-    except:
-        id = None
-        if not domain: return '', 500
-        if domain == '*': domain = None
-        else: 
-            domain = domain_validate(domain)
-            if domain is BadName:
-                return 'badname', 520
-
-    if action == Domain.hash_new: return add_object(app, domain, 'd')
-    elif action == Domain.hash_mv: return remove_object(app, id, 'd')
-    elif action == Domain.hash_edit: return edit_object(app, domain, 'd') 
-    elif action == Domain.hash_switch: return switch_object(app, domain, 'd')
-    
-    return '', 404
-
+    return domains_action_worker(app, domain, action)
 
 @app.route('/zones', methods=['GET','POST'])
 def zones():
