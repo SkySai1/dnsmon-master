@@ -88,15 +88,15 @@ class Nodes(Base):
     id = Column(Integer, primary_key=True)
     node = Column(String(255), unique=True)
 
-class DomainsList(Base):
+class D_list(Base):
     __tablename__ = "domains_list"
     id = Column(Integer, primary_key=True)
     fqdn = Column(String(255), nullable=False, unique=True)
     active = Column(Boolean, default=True)
 
 
-class Domains(Base):  
-    __tablename__ = "domains" 
+class D_state(Base):  
+    __tablename__ = "domains_state" 
     id = Column(BigInteger, primary_key=True)
     node = Column(String(255), ForeignKey('nodes.node', ondelete='cascade'), nullable=False)
     ts = Column(DateTime(timezone=True), nullable=False)  
@@ -106,14 +106,14 @@ class Domains(Base):
     message = Column(Text)
     auth = Column(String(255), default = None)
 
-class ZonesList(Base):
+class Z_list(Base):
     __tablename__ = "zones_list"
     id = Column(Integer, primary_key=True)
     fqdn = Column(String(255), nullable=False, unique=True)
     active = Column(Boolean, default=True)
 
-class Zones(Base):
-    __tablename__ = "zones"
+class Z_state(Base):
+    __tablename__ = "zones_state"
     id = Column(BigInteger, primary_key=True)
     node = Column(String(255), ForeignKey('nodes.node', ondelete='cascade'), nullable=False)
     ts = Column(DateTime(timezone=True), nullable=False)
@@ -139,19 +139,19 @@ class ShortResolve(Base):
     rtime = Column(Float)
 
 
-class ServerList(Base):
-    __tablename__ = "server_list"
+class NS_list(Base):
+    __tablename__ = "ns_list"
     id = Column(Integer, primary_key=True)
     name = Column(String(255), nullable=False, unique=True)
     ip = Column(String(255), nullable=False, unique=True)
     tag = Column(String(255), nullable=False)
 
-class Servers(Base):  
-    __tablename__ = "servers" 
+class NS_state(Base):  
+    __tablename__ = "ns_state" 
     id = Column(BigInteger, primary_key=True)
     node = Column(String(255), ForeignKey('nodes.node', ondelete='cascade'), nullable=False)
     ts = Column(DateTime(timezone=True), nullable=False)  
-    server = Column(String(255), ForeignKey('server_list.name', ondelete='cascade'), nullable=False) 
+    server = Column(String(255), ForeignKey('ns_list.name', ondelete='cascade'), nullable=False) 
     status = Column(SmallInteger, nullable=False)
     message = Column(Text)
 
@@ -248,10 +248,10 @@ class AccessDB:
     def get_domains(self, id:str=None, fqdn:str=None):
         try:
             where = []
-            if id: where.append(DomainsList.id == id)
-            if fqdn: where.append(DomainsList.fqdn == fqdn)
+            if id: where.append(D_list.id == id)
+            if fqdn: where.append(D_list.fqdn == fqdn)
             with Session(self.engine) as conn:
-                result = conn.execute(select(DomainsList).filter(*where).order_by(DomainsList.fqdn)).fetchall()
+                result = conn.execute(select(D_list).filter(*where).order_by(D_list.fqdn)).fetchall()
                 return result
         except Exception as e:
             logging.error('Get domains list from database is fail', exc_info=(logging.DEBUG >= logging.root.level))
@@ -261,9 +261,9 @@ class AccessDB:
         try:
             
             with Session(self.engine) as conn:
-                if conn.execute(select(DomainsList).filter(DomainsList.fqdn == fqdn)).fetchone():
+                if conn.execute(select(D_list).filter(D_list.fqdn == fqdn)).fetchone():
                     return UniqueViolation
-                stmt = insert(DomainsList).values(fqdn = fqdn).returning(DomainsList)
+                stmt = insert(D_list).values(fqdn = fqdn).returning(D_list)
                 data = conn.scalars(stmt).fetchmany()
                 conn.commit()
                 for obj in data:
@@ -276,10 +276,10 @@ class AccessDB:
     def remove_domains(self, id:str=None, fqdn:str=None):
         try:
             where = []
-            if id: where.append(DomainsList.id == id)
-            if fqdn: where.append(DomainsList.fqdn == fqdn)
+            if id: where.append(D_list.id == id)
+            if fqdn: where.append(D_list.fqdn == fqdn)
             with Session(self.engine) as conn:
-                stmt = delete(DomainsList).filter(*where).returning(DomainsList.id)
+                stmt = delete(D_list).filter(*where).returning(D_list.id)
                 result = conn.scalars(stmt).one()
                 conn.commit()
                 return result
@@ -290,10 +290,10 @@ class AccessDB:
     def update_domain(self, new:str, id:int=None, fqdn:str=None):
         try:
             where = []
-            if id: where.append(DomainsList.id == id)
-            if fqdn: where.append(DomainsList.fqdn == fqdn)
+            if id: where.append(D_list.id == id)
+            if fqdn: where.append(D_list.fqdn == fqdn)
             with Session(self.engine) as conn:
-                stmt = update(DomainsList).filter(*where).values(fqdn = new).returning(DomainsList.fqdn)
+                stmt = update(D_list).filter(*where).values(fqdn = new).returning(D_list.fqdn)
                 result = conn.scalars(stmt).one_or_none()
                 conn.commit()
                 return result
@@ -306,10 +306,10 @@ class AccessDB:
             if state.lower() == "true": state = True
             elif state.lower() == "false": state = False
             where = []
-            if id: where.append(DomainsList.id == id)
-            if fqdn: where.append(DomainsList.fqdn == fqdn)
+            if id: where.append(D_list.id == id)
+            if fqdn: where.append(D_list.fqdn == fqdn)
             with Session(self.engine) as conn:
-                stmt = update(DomainsList).filter(*where).values(active = state)
+                stmt = update(D_list).filter(*where).values(active = state)
                 conn.execute(stmt)
                 conn.commit()
                 return True
@@ -329,10 +329,10 @@ class AccessDB:
     def get_zones(self, id:str=None, fqdn:str=None):
         try:
             where = []
-            if id: where.append(ZonesList.id == id)
-            if fqdn: where.append(ZonesList.fqdn == fqdn)
+            if id: where.append(Z_list.id == id)
+            if fqdn: where.append(Z_list.fqdn == fqdn)
             with Session(self.engine) as conn:
-                result = conn.execute(select(ZonesList).filter(*where).order_by(ZonesList.fqdn)).fetchall()
+                result = conn.execute(select(Z_list).filter(*where).order_by(Z_list.fqdn)).fetchall()
                 return result
         except Exception as e:
             logging.error('Get zones list from database is fail', exc_info=(logging.DEBUG >= logging.root.level))
@@ -343,9 +343,9 @@ class AccessDB:
         try:
             
             with Session(self.engine) as conn:
-                if conn.execute(select(ZonesList).filter(ZonesList.fqdn == fqdn)).fetchone():
+                if conn.execute(select(Z_list).filter(Z_list.fqdn == fqdn)).fetchone():
                     return UniqueViolation
-                stmt = insert(ZonesList).values(fqdn = fqdn).returning(ZonesList)
+                stmt = insert(Z_list).values(fqdn = fqdn).returning(Z_list)
                 data = conn.scalars(stmt).fetchmany()
                 conn.commit()
                 for obj in data:
@@ -358,10 +358,10 @@ class AccessDB:
     def remove_zone(self, id:str=None, fqdn:str=None):
         try:
             where = []
-            if id: where.append(ZonesList.id == id)
-            if fqdn: where.append(ZonesList.fqdn == fqdn)
+            if id: where.append(Z_list.id == id)
+            if fqdn: where.append(Z_list.fqdn == fqdn)
             with Session(self.engine) as conn:
-                stmt = delete(ZonesList).filter(*where).returning(ZonesList.fqdn)
+                stmt = delete(Z_list).filter(*where).returning(Z_list.fqdn)
                 result = conn.scalars(stmt).one()
                 conn.commit()
                 return result
@@ -372,10 +372,10 @@ class AccessDB:
     def update_zone(self, new:str, id:int=None, fqdn:str=None):
         try:
             where = []
-            if id: where.append(ZonesList.id == id)
-            if fqdn: where.append(ZonesList.fqdn == fqdn)
+            if id: where.append(Z_list.id == id)
+            if fqdn: where.append(Z_list.fqdn == fqdn)
             with Session(self.engine) as conn:
-                stmt = update(ZonesList).filter(*where).values(fqdn = new).returning(ZonesList.fqdn)
+                stmt = update(Z_list).filter(*where).values(fqdn = new).returning(Z_list.fqdn)
                 result = conn.scalars(stmt).one_or_none()
                 conn.commit()
                 return result
@@ -388,10 +388,10 @@ class AccessDB:
             if state.lower() == "true": state = True
             elif state.lower() == "false": state = False
             where = []
-            if id: where.append(ZonesList.id == id)
-            if fqdn: where.append(ZonesList.fqdn == fqdn)
+            if id: where.append(Z_list.id == id)
+            if fqdn: where.append(Z_list.fqdn == fqdn)
             with Session(self.engine) as conn:
-                stmt = update(ZonesList).filter(*where).values(active = state)
+                stmt = update(Z_list).filter(*where).values(active = state)
                 conn.execute(stmt)
                 conn.commit()
                 return True
