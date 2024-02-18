@@ -7,7 +7,7 @@ from back.object import Domain, Zones
 
 
 def add_object(app:Flask, fqdn, otype:str):
-    db = AccessDB(app.config.get('DB').engine, app.config.get('CONF'))
+    db = AccessDB(app.config.get('DB').engine)
     if not fqdn: return 'empty', 520
     if otype.lower() == 'd': 
         result = db.new_domain(fqdn)
@@ -29,7 +29,7 @@ def add_object(app:Flask, fqdn, otype:str):
         return 'fail', 520
 
 def remove_object(app:Flask, id, otype:str):
-    db = AccessDB(app.config.get('DB').engine, app.config.get('CONF'))
+    db = AccessDB(app.config.get('DB').engine)
     if otype.lower() == 'd':  result = db.remove_domains(id)
     elif otype.lower() == 'z':  result = db.remove_zone(id)
     if result:
@@ -42,7 +42,7 @@ def edit_object(app:Flask, fqdn:str, otype:str):
     input = request.form.get('new')
     new = domain_validate(input)
     if not new: return 'badname', 520
-    db = AccessDB(app.config.get('DB').engine, app.config.get('CONF'))
+    db = AccessDB(app.config.get('DB').engine)
     if otype.lower() == 'd': result = db.update_domain(new, fqdn=fqdn)
     elif otype.lower() == 'z':  result = db.remove_zone(new, fqdn=fqdn)
     if result:
@@ -51,7 +51,7 @@ def edit_object(app:Flask, fqdn:str, otype:str):
         return '', 520
 
 def switch_object(app:Flask, fqdn:str, otype:str):
-    db = AccessDB(app.config.get('DB').engine, app.config.get('CONF'))
+    db = AccessDB(app.config.get('DB').engine)
     state = request.form.get('state')
     if otype.lower() == 'd': result = db.switch_domain(state, fqdn=fqdn)
     elif otype.lower() == 'z': result = db.switch_zone(state, fqdn=fqdn)
