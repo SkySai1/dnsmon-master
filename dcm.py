@@ -10,29 +10,15 @@ from back.accessdb import AccessDB, enginer
 from back.object import Domain, BadName, Zones
 from back.functions import parse_list, domain_validate
 from back.worker import add_object, edit_object, remove_object, switch_object
+from back.auth import check_auth
 
 app = Flask(__name__)
 
 @app.before_request
-def pre_load():
-    if "user_id" in session:
-        pass
-    elif request.path in ['/static/css/login.css']:
-        pass
-    elif request.form.get('action') == str(hash("login")):
-        user = request.form.get('username')
-        passwd = request.form.get('password')
-        if user and passwd:
-            appdb = app.config.get('DB')
-            db = AccessDB(appdb.engine)
-            user_id = db.get_userid(user, passwd)
-            if user_id: 
-                session.update(user_id = user_id[0])
-                return redirect(request.url)
-            else:
-                flash('Пользователь не найден')
-                return login()
-    else:
+def before_request():
+    if check_auth(app) is True:
+        return redirect(request.url)
+    elif check_auth(app) is False:
         return login()
 
 @app.errorhandler(404)
