@@ -13,7 +13,7 @@ def parse_list(rawdata):
       data = []
       for obj in rawdata:
          row = obj[0]
-         data.append([row.fqdn, row.id, row.active])
+         data.append([row.id, row.fqdn, row.active])
       return data
    return []
 

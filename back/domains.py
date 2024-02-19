@@ -9,17 +9,16 @@ from back.worker import add_object, edit_object, remove_object, switch_object
 
 
 def domains_page(app:Flask):
-    appdb = app.config.get('DB')
-    db = AccessDB(appdb.engine)
-    data = db.get_domains()
-    d_list = parse_list(data)
-    form = NewDomain()
     if request.method == 'POST':
+        appdb = app.config.get('DB')
+        db = AccessDB(appdb.engine)
+        data = db.get_domains()
+        d_list = parse_list(data)
         return d_list
     else:
+        form = NewDomain()
         return render_template(
             'domains.jinja', 
-            domains = d_list, 
             form = form, 
             new = Domain.hash_new,
             remove = Domain.hash_mv,

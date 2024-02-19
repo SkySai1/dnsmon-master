@@ -8,9 +8,7 @@ function PostSender(url, data, func){
   })
   .done(function(result){
     func(result);
-  }
-
-  )
+  });
 };
 
 
