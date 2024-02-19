@@ -2,7 +2,7 @@ from flask import Flask, flash, redirect, request, session
 from back.accessdb import AccessDB
 
 def check_auth(app:Flask):
-    #return
+    return
     if "user_id" in session:
         return
     elif request.path in ['/static/css/login.css']:

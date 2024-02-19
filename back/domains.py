@@ -28,8 +28,8 @@ def domains_page(app:Flask):
         )
 
 
-def domains_action_worker(app:Flask, domain, action):
-    try:
+def domains_action_worker(app:Flask, action):
+    '''try:
         id = int(domain)
         domain = None
     except:
@@ -39,11 +39,14 @@ def domains_action_worker(app:Flask, domain, action):
         else: 
             domain = domain_validate(domain)
             if domain is BadName:
-                return 'badname', 520
-
-    if action == Domain.hash_new: return add_object(app, domain, 'd')
-    elif action == Domain.hash_mv: return remove_object(app, id, 'd')
-    elif action == Domain.hash_edit: return edit_object(app, domain, 'd') 
-    elif action == Domain.hash_switch: return switch_object(app, domain, 'd')
-    
+                return 'badname', 520'''
+    try:
+        domains = request.form.getlist('domains[]')
+        for domain in domains:
+            if domain_validate(domain) is BadName:
+                return ['badname'], 520
+        if action == Domain.hash_new: 
+            return add_object(app, domains, 'd')
+    except:
+        return ['error'], 500   
     return '', 404

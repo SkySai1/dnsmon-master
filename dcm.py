@@ -54,9 +54,9 @@ def user(name):
 def domains():
     return domains_page(app)
 
-@app.route('/domains/<domain>/<action>', methods = ['POST'])
-def domain_action(domain, action):
-    return domains_action_worker(app, domain, action)
+@app.route('/domains/<action>', methods = ['POST'])
+def domain_action(action):
+    return domains_action_worker(app, action)
 
 @app.route('/zones', methods=['GET','POST'])
 def zones():

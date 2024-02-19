@@ -6,27 +6,17 @@ from back.functions import domain_validate
 from back.object import Domain, Zones
 
 
-def add_object(app:Flask, fqdn, otype:str):
-    db = AccessDB(app.config.get('DB').engine)
-    if not fqdn: return 'empty', 520
-    if otype.lower() == 'd': 
-        result = db.new_domain(fqdn)
-        obj = Domain
-    elif otype.lower() == 'z': 
-        result = db.new_zone(fqdn)
-        obj = Zones
-
-    if result and type(result) is tuple:
-        return {
-            "object": result[1],
-            "id": result[0],
-            "remove": obj.hash_mv,  
-            "edit": obj.hash_edit, 
-            "switch": obj.hash_switch}
-    elif result is UniqueViolation:
-        return 'exist', 520
-    else: 
-        return 'fail', 520
+def add_object(app:Flask, data:str|list, otype:str):
+    try:
+        if type(data) is str: data = [data]
+        db = AccessDB(app.config.get('DB').engine)
+        if otype.lower() == 'd':
+            result = []
+            for d in data:
+                result.append(db.new_domain(d))
+            return result
+    except:
+        return ['fail'], 520
 
 def remove_object(app:Flask, id, otype:str):
     db = AccessDB(app.config.get('DB').engine)

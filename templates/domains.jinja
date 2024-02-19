@@ -2,7 +2,7 @@
 {% block title %}Домены{% endblock %}
 {% block head %}
     {{ super() }}
-    <script type="text/javascript" src="static/js/main.js"></script>
+    <script type="text/javascript" src="static/js/domains.js"></script>
     <script> window.onload = get_all('/domains', '{{remove}}', '{{edit}}', '{{switch}}')</script>
     <style>
     </style>
@@ -17,8 +17,9 @@
             <form method="post" onsubmit="return false">
                 <table>
                     <tr>
-                        <td><p>{{form.domain()}}</p></td>
-                        <td><button onclick="new_object('/domains',$(this.form).serializeArray(), '{{new}}')">Плюсик</button></td>
+                        <td><p>{{form.domain()}}{{form.new()}}</p></td>
+                        <!-- <td><button onclick="new_object('/domains',$(this.form).serializeArray(), '{{new}}')">Плюсик</button></td> -->
+                        <td><button onclick="DomainCreate($(this.form).serializeArray())">Плюсик</button></td>
                         <td><input id="d_import" type="file" onchange="object_import('/domains',this, '{{new}}')"> <label for="d_import">Импорт</label></td>
                     </tr>
                 </table>

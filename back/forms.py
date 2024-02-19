@@ -1,6 +1,7 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, PasswordField, BooleanField
+from wtforms import StringField, SubmitField, PasswordField, BooleanField, HiddenField
 from wtforms.validators import DataRequired
+from back.object import Domain
 
 class LoginForm(FlaskForm):
     username = StringField('Логин', validators=[DataRequired()])
@@ -9,6 +10,11 @@ class LoginForm(FlaskForm):
 
 class NewDomain(FlaskForm):
     domain = StringField('Домен', validators=[DataRequired()], render_kw={"placeholder": "Добавить домен"})
+    new = HiddenField()
+
+    def __init__(self, formdata=None, **kwargs):
+        super().__init__(formdata, **kwargs)
+        self.new.render_kw={"value":Domain.hash_new}
 
 class NewZone(FlaskForm):
     zone = StringField('Зона', validators=[DataRequired()], render_kw={"placeholder": "Добавить зону"})
@@ -16,6 +22,7 @@ class NewZone(FlaskForm):
 class DomainForm(FlaskForm):
     state = BooleanField('Статус')
     domain = StringField('Домен', validators=[DataRequired()])
+
 
     def __init__(self, name:str, formdata=None, **kwargs):
         super().__init__(formdata, **kwargs)

@@ -259,7 +259,6 @@ class AccessDB:
         
     def new_domain(self, fqdn:str):
         try:
-            
             with Session(self.engine) as conn:
                 if conn.execute(select(D_list).filter(D_list.fqdn == fqdn)).fetchone():
                     return UniqueViolation

@@ -1,3 +1,20 @@
+function PostSender(url, data, func){
+  'use strict';
+  $.ajax({
+    url: url,
+    data: data,
+    method: 'POST',
+    dataType:'json'
+  })
+  .done(function(result){
+    func(result);
+  }
+
+  )
+};
+
+
+
 function get_all(what, remove, edit, sw){
   $.ajax({
     url: what,
