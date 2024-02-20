@@ -41,7 +41,7 @@ function CreateDomainRow(id, domain, state){
     var number = $(`<td>${pos}</td>`)
     var active = $(`<td><input class="domainSwitch" type="checkbox" ${checked} onchange="SwitchDomain('${domain}', this.checked)"/></td>`)
     var name = $(`<td><input id="d-${id}" class="domainName" value="${domain}" disabled></td>`)
-    var edit = $(`<td class="editcell"><button id="de-${id}" onclick="EditDomain('${id}')">Ручка</button></td>`)
+    var edit = $(`<td class="editcell"><button id="de-${id}" class="editbutton" onclick="EditDomain('${id}')">Ручка</button></td>`)
     var trash = $(`<td><button onclick="RemoveDomain('${id}')">Корзина</button></td>`)
     var select = $(`<td><input id="ds-${id}" class="select" type="checkbox" onchange="SelectRow(this)"></td>`)
 
@@ -93,11 +93,13 @@ function EditDomain(id) {
         }
     })
     var cell = row.children('.editcell')
+    var edit = cell.children('.editbutton')
     var input = row.children('td').children('.domainName')
     const origin = input.val()
-    var save = $(`<button onclick="EditDomainSave('${id}')">Дискета</button>`)
-    var cancel = $(`<button>Крестик</button>`)
-    cell.html('')
+    var save = $(`<button class="savebtn" onclick="EditDomainSave('${id}')">Дискета</button>`)
+    var cancel = $(`<button class="cancelbtn" onclick="EditDomainCancel('${id}', '${origin}')">Крестик</button>`)
+    edit.css('display', 'none');
+    //cell.html('')
     cell.append(save)
     cell.append(cancel)
     input.prop('disabled', false);
@@ -129,12 +131,36 @@ function EditDomainSavePostWork(array){
             }
         })
         var cell = row.children('.editcell')
+        var edit = cell.children('.editbutton')
+        var save = cell.children('.savebtn')
+        var cancel = cell.children('.cancelbtn')
         var input = row.children('td').children('.domainName')
         input.val(one['value']);
         input.attr('value', one['value']);
         input.prop('disabled', true);
-        cell.html('')
+        edit.css('display', '');
+        save.remove();
+        cancel.remove();
     })
+}
+
+function EditDomainCancel(id, origin){
+    console.log('haaha')
+    var row = $('.domainrow').filter(function(){
+        if (this.id.match(id)) {
+            return this
+        }
+    })
+    var cell = row.children('.editcell')
+    var edit = cell.children('.editbutton')
+    var save = cell.children('.savebtn')
+    var cancel = cell.children('.cancelbtn')
+    var input = row.children('td').children('.domainName')
+    input.val(origin)
+    input.prop('disabled', true);
+    edit.css('display', '');
+    save.remove();
+    cancel.remove();
 }
 
 function SelectRow(){
