@@ -9,8 +9,16 @@ function PostSender(url, data, func){
   .done(function(result){
     func(result);
   });
-};
+}
 
+function nothing(){
+  'use strict';
+  false;
+}
+
+function Messager(element, message) {
+  $(element).text(message);
+}
 
 
 function get_all(what, remove, edit, sw){

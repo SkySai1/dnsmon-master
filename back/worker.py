@@ -1,4 +1,5 @@
 
+import logging
 from back.accessdb import AccessDB
 from flask import Flask, request
 from psycopg2.errors import UniqueViolation
@@ -13,7 +14,11 @@ def add_object(app:Flask, data:str|list, otype:str):
         if otype.lower() == 'd':
             result = []
             for d in data:
-                result.append(db.new_domain(d))
+                state = db.new_domain(d)
+                if state is UniqueViolation:
+                    result.append(['exist', 520])
+                else:
+                    result.append(state)
             return result
     except:
         return ['fail'], 520
@@ -40,12 +45,23 @@ def edit_object(app:Flask, fqdn:str, otype:str):
     else:
         return '', 520
 
-def switch_object(app:Flask, fqdn:str, otype:str):
+def switch_object(app:Flask, data:str|list, states:str|list, otype:str):
+    if type(data) is str: data = [data]
+    if type(states) is str: states = [states]
     db = AccessDB(app.config.get('DB').engine)
-    state = request.form.get('state')
-    if otype.lower() == 'd': result = db.switch_domain(state, fqdn=fqdn)
-    elif otype.lower() == 'z': result = db.switch_zone(state, fqdn=fqdn)
-    if result:
-        return [result]
-    else:
-        return '', 520       
+    if otype.lower() == 'd':
+        result = []
+        for domain in data:
+            try: 
+                state = states[data.index(domain)]
+            except:
+                logging.error(f'Not specify state for domain {domain}', exc_info=(logging.DEBUG >= logging.root.level)) 
+                return [''], 520
+            result.append(db.switch_domain(state, fqdn=domain))
+        if False in result:
+            return ['fail'], 520
+
+    #print(data, states)
+    return ['']
+    #if otype.lower() == 'd': result = db.switch_domain(state, fqdn=fqdn)
+    #elif otype.lower() == 'z': result = db.switch_zone(state, fqdn=fqdn)  

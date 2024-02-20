@@ -12,7 +12,7 @@
     <h1>Список доменов </h1>
     <div>
         <div>
-            <p id="message"></p>
+            <p id="domainMessage"></p>
             <p id="hmsg" hidden></p>
             <div>
                 <input id="switchHash" type="hidden", value="{{switch}}">
@@ -35,10 +35,10 @@
             <hr>
             <table id="domains_list">
                 <tr>
-                    <td></td><td><input id="o-sw-all" type="checkbox" checked onchange="switch_object('/domains','*', '{{switch}}', this.checked)"></td>
+                    <td></td><td><input id="switchall" type="checkbox" checked onchange=""></td>
                     <td></td><td></td>
                     <td><button onclick="remove_selected_objects('/domains','{{remove}}')">Много корзин</button></td>
-                    <td><input id="switchall" type="checkbox" onchange="select_objects(this.checked)"></td>
+                    <td><input id="selectall" type="checkbox" onchange="select_objects(this.checked)"></td>
                 </tr>
             </table>
         </div>

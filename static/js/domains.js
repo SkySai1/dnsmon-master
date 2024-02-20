@@ -1,7 +1,7 @@
 function GetAll(){
     'use strict';
     var url = '/domains';
-    new PostSender(url, '', DomainCreateRow);
+    new PostSender(url, '', DomainPostWork);
 }
 
 function DomainCreate(data) {
@@ -9,13 +9,20 @@ function DomainCreate(data) {
     var domain = data[0]['value'];
     var hash = data[1]['value'];
     var url = '/domains/' + hash;
-    new PostSender(url, {'domains': [domain]}, DomainCreateRow);
+    new PostSender(url, {'domains': [domain]}, DomainPostWork);
 }
 
-function DomainCreateRow(result) {
+function DomainPostWork(result) {
     'use strict';
     result.forEach(data => {
-        new CreateDomainRow(data[0], data[1], true);
+        switch (data[0]){
+            case 'exist':
+                new Messager($('#domainMessage'), 'Домен существует')
+                break
+            default:
+                new CreateDomainRow(data[0], data[1], data[2]);
+                break
+        };
     });
 };
 
@@ -47,9 +54,10 @@ function CreateDomainRow(id, domain, state){
     table.append(row)
   }
 
-function SwitchDomain(domain, check){
+function SwitchDomain(domain, state){
     var hash = document.getElementById('switchHash').value
-    false;
+    var url = '/domains/' + hash
+    new PostSender(url, {'domains': [domain], 'states': [state]}, nothing);
 }
 
 function EditDomain(domain, hash) {

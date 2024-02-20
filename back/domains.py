@@ -40,12 +40,15 @@ def domains_action_worker(app:Flask, action):
             if domain is BadName:
                 return 'badname', 520'''
     try:
-        domains = request.form.getlist('domains[]')
-        for domain in domains:
+        data = request.form.getlist('domains[]')
+        for domain in data:
             if domain_validate(domain) is BadName:
                 return ['badname'], 520
         if action == Domain.hash_new: 
-            return add_object(app, domains, 'd')
+            return add_object(app, data, 'd')
+        elif action == Domain.hash_switch:
+            states = request.form.getlist('states[]')
+            return switch_object(app, data, states, 'd')
     except:
         return ['error'], 500   
     return '', 404

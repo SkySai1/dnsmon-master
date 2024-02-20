@@ -266,7 +266,7 @@ class AccessDB:
                 data = conn.scalars(stmt).fetchmany()
                 conn.commit()
                 for obj in data:
-                    return obj.id, obj.fqdn
+                    return obj.id, obj.fqdn, obj.active
                 return None, None
         except Exception as e:
             logging.error('Add domain into database is fail', exc_info=(logging.DEBUG >= logging.root.level))
