@@ -42,8 +42,8 @@ function CreateDomainRow(id, domain, state){
     var active = $(`<td><input class="domainSwitch" type="checkbox" ${checked} onchange="SwitchDomain('${domain}', this.checked)"/></td>`)
     var name = $(`<td><input id="d-${id}" class="domainName" value="${domain}" disabled></td>`)
     var edit = $(`<td><button id="de-${id}" onclick="EditDomain('${domain}')">Ручка</button></td>`)
-    var trash = $(`<td><button onclick="RemoveDomain('${domain}')">Корзина</button></td>`)
-    var select = $(`<td><input id="ds-${id}" class="select" type="checkbox"></td>`)
+    var trash = $(`<td><button onclick="RemoveDomain('${id}')">Корзина</button></td>`)
+    var select = $(`<td><input id="ds-${id}" class="select" type="checkbox" onchange="SelectRow(this)"></td>`)
 
     row.append(number)
     row.append(active)
@@ -86,14 +86,58 @@ function SwitchAllDomains(state) {
     });
 }
 
-function EditDomain(domain, hash) {
+function EditDomain(domain) {
     var hash = document.getElementById('editHash').value
     false;
 }
 
-function RemoveDomain(domain, hash){
+function SelectRow(){
+    var allselect = document.getElementById('selectall');
+    var selectes = $('.select').map(function(){
+        return this.checked
+    }).get()
+
+    if (selectes.includes(true)) {
+        allselect.checked = true
+    } else {
+        allselect.checked = false
+    }
+}
+
+function AllSelectRows(state) {
+    $('.domainrow').map(function(){
+        if ($(this).css("display") != 'none'){
+            var select = this.querySelector('.select');
+            select.checked = state;
+        };
+    })
+    //console.log(state)
+}
+
+function RemoveDomain(id){
     var hash = document.getElementById('removeHash').value
-    false;
+    var url = '/domains/' + hash
+    new PostSender(url, {'id': [id]}, RemoveDomainPostWork);
+}
+
+function RemoveManyDomains(){
+    var hash = document.getElementById('removeHash').value
+    var url = '/domains/' + hash
+    var reg = /\d+/
+    var indexes = $('.select').map(function(){
+        if (this.checked == true){
+            return this.id.match(reg)
+        };
+    }).get()
+    new PostSender(url, {'id': indexes}, RemoveDomainPostWork);
+    var allselect = document.getElementById('selectall');
+    allselect.checked = false;
+}
+
+function RemoveDomainPostWork(data){
+    data.forEach(id => {
+        $('#row-'+id).remove()
+    })
 }
 
 function SearchDomain(field) {

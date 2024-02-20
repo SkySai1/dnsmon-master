@@ -23,12 +23,18 @@ def add_object(app:Flask, data:str|list, otype:str):
     except:
         return ['fail'], 520
 
-def remove_object(app:Flask, id, otype:str):
+def remove_object(app:Flask, indexes:str|list, otype:str):
+    if type(indexes) is str: indexes = [indexes]
     db = AccessDB(app.config.get('DB').engine)
-    if otype.lower() == 'd':  result = db.remove_domains(id)
+    result = []
+    if otype.lower() == 'd':  
+        for i in indexes:
+            state = db.remove_domains(i)
+            if type(state) is int:
+                result.append(state)
     elif otype.lower() == 'z':  result = db.remove_zone(id)
     if result:
-        return [result]
+        return result
     else:
         return '', 520
 

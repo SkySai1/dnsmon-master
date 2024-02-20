@@ -49,6 +49,9 @@ def domains_action_worker(app:Flask, action):
         elif action == Domain.hash_switch:
             states = request.form.getlist('states[]')
             return switch_object(app, data, states, 'd')
+        elif action == Domain.hash_mv:
+            indexes = request.form.getlist('id[]')
+            return remove_object(app, indexes, 'd')
     except:
         return ['error'], 500   
     return '', 404
