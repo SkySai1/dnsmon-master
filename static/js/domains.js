@@ -87,21 +87,54 @@ function SwitchAllDomains(state) {
 }
 
 function EditDomain(id) {
-    var hash = document.getElementById('editHash').value
-    var url = '/domains/' + hash
-    var reg = new RegExp("/" + id + "/")
     var row = $('.domainrow').filter(function(){
         if (this.id.match(id)) {
             return this
         }
     })
     var cell = row.children('.editcell')
-    var save = $(`<button>Дискета</button>`)
+    var input = row.children('td').children('.domainName')
+    const origin = input.val()
+    var save = $(`<button onclick="EditDomainSave('${id}')">Дискета</button>`)
     var cancel = $(`<button>Крестик</button>`)
     cell.html('')
     cell.append(save)
     cell.append(cancel)
+    input.prop('disabled', false);
     false;
+}
+
+function EditDomainSave(id){
+    var row = $('.domainrow').filter(function(){
+        if (this.id.match(id)) {
+            return this
+        }
+    })
+    var input = row.children('td').children('.domainName')
+    var data = new Object()
+    data.index = id
+    data.value = input.val()
+
+    var hash = document.getElementById('editHash').value
+    var url = '/domains/' + hash
+    new PostSender(url, JSON.stringify([data]), EditDomainSavePostWork, 'application/json');
+}
+
+function EditDomainSavePostWork(array){
+    array.forEach(function(one){
+        var id = one['id']
+        var row = $('.domainrow').filter(function(){
+            if (this.id.match(id)) {
+                return this
+            }
+        })
+        var cell = row.children('.editcell')
+        var input = row.children('td').children('.domainName')
+        input.val(one['value']);
+        input.attr('value', one['value']);
+        input.prop('disabled', true);
+        cell.html('')
+    })
 }
 
 function SelectRow(){

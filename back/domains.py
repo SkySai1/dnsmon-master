@@ -1,4 +1,5 @@
 
+import logging
 from flask import Flask, render_template, request
 
 from back.accessdb import AccessDB
@@ -40,18 +41,22 @@ def domains_action_worker(app:Flask, action):
             if domain is BadName:
                 return 'badname', 520'''
     try:
-        data = request.form.getlist('domains[]')
-        for domain in data:
+        domains = request.form.getlist('domains[]')
+        for domain in domains:
             if domain_validate(domain) is BadName:
                 return ['badname'], 520
         if action == Domain.hash_new: 
-            return add_object(app, data, 'd')
+            return add_object(app, domains, 'd')
         elif action == Domain.hash_switch:
             states = request.form.getlist('states[]')
-            return switch_object(app, data, states, 'd')
+            return switch_object(app, domains, states, 'd')
         elif action == Domain.hash_mv:
             indexes = request.form.getlist('id[]')
             return remove_object(app, indexes, 'd')
+        elif action == Domain.hash_edit:
+            data = request.json
+            return edit_object(app, data, 'd')
     except:
+        logging.error('Fail with domains action process', exc_info=(logging.DEBUG >= logging.root.level))
         return ['error'], 500   
     return '', 404

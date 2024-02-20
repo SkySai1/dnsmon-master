@@ -1,10 +1,14 @@
-function PostSender(url, data, func){
+function PostSender(url, data, func, ctype){
   'use strict';
+  if (!ctype) {
+    ctype = 'application/x-www-form-urlencoded; charset=UTF-8'
+  }
   $.ajax({
     url: url,
     data: data,
     method: 'POST',
-    dataType:'json'
+    dataType:'json',
+    contentType: ctype
   })
   .done(function(result){
     func(result);

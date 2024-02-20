@@ -4,7 +4,7 @@ from back.accessdb import AccessDB
 from flask import Flask, request
 from psycopg2.errors import UniqueViolation
 from back.functions import domain_validate
-from back.object import Domain, Zones
+from back.object import BadName, Domain, Zones
 
 
 def add_object(app:Flask, data:str|list, otype:str):
@@ -38,14 +38,16 @@ def remove_object(app:Flask, indexes:str|list, otype:str):
     else:
         return '', 520
 
-def edit_object(app:Flask, fqdn:str, otype:str):
-    if not fqdn: return 'empty', 520
-    input = request.form.get('new')
-    new = domain_validate(input)
-    if not new: return 'badname', 520
+def edit_object(app:Flask, data:list, otype:str):
     db = AccessDB(app.config.get('DB').engine)
-    if otype.lower() == 'd': result = db.update_domain(new, fqdn=fqdn)
-    elif otype.lower() == 'z':  result = db.remove_zone(new, fqdn=fqdn)
+    for one in data:
+        if domain_validate(one['value']) is BadName:
+            return ['fail'], 520
+        new = {
+            'id': one['index'],
+            'fqdn': one['value']
+        }
+        result = db.update_domain(new)
     if result:
         return [result]
     else:

@@ -286,16 +286,15 @@ class AccessDB:
             logging.error('Remove domain list in database is fail', exc_info=(logging.DEBUG >= logging.root.level))
             return None
               
-    def update_domain(self, new:str, id:int=None, fqdn:str=None):
+    def update_domain(self, data:dict=None):
         try:
-            where = []
-            if id: where.append(D_list.id == id)
-            if fqdn: where.append(D_list.fqdn == fqdn)
             with Session(self.engine) as conn:
-                stmt = update(D_list).filter(*where).values(fqdn = new).returning(D_list.fqdn)
-                result = conn.scalars(stmt).one_or_none()
+                stmt = update(D_list).values(data).filter(D_list.id == data['id']).returning(D_list)
+                result = conn.execute(stmt).fetchall()
+                #result = conn.execute(update(D_list).returning(D_list), [data]).fetchmany()
                 conn.commit()
-                return result
+                for obj in result:
+                    return {'id': obj[0].id, 'value': obj[0].fqdn}
         except Exception as e:
             logging.error('Update domains in database is fail', exc_info=(logging.DEBUG >= logging.root.level))
             return False
