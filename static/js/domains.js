@@ -41,7 +41,7 @@ function CreateDomainRow(id, domain, state){
     var number = $(`<td>${pos}</td>`)
     var active = $(`<td><input class="domainSwitch" type="checkbox" ${checked} onchange="SwitchDomain('${domain}', this.checked)"/></td>`)
     var name = $(`<td><input id="d-${id}" class="domainName" value="${domain}" disabled></td>`)
-    var edit = $(`<td><button id="de-${id}" onclick="EditDomain('${domain}')">Ручка</button></td>`)
+    var edit = $(`<td class="editcell"><button id="de-${id}" onclick="EditDomain('${id}')">Ручка</button></td>`)
     var trash = $(`<td><button onclick="RemoveDomain('${id}')">Корзина</button></td>`)
     var select = $(`<td><input id="ds-${id}" class="select" type="checkbox" onchange="SelectRow(this)"></td>`)
 
@@ -86,8 +86,21 @@ function SwitchAllDomains(state) {
     });
 }
 
-function EditDomain(domain) {
+function EditDomain(id) {
     var hash = document.getElementById('editHash').value
+    var url = '/domains/' + hash
+    var reg = new RegExp("/" + id + "/")
+    var row = $('.domainrow').filter(function(){
+        if (this.id.match(id)) {
+            return this
+        }
+    })
+    var cell = row.children('.editcell')
+    var save = $(`<button>Дискета</button>`)
+    var cancel = $(`<button>Крестик</button>`)
+    cell.html('')
+    cell.append(save)
+    cell.append(cancel)
     false;
 }
 

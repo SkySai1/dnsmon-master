@@ -10,7 +10,7 @@ function PostSender(url, data, func){
     func(result);
   })
   .fail(function(result){
-    alert('Внутрення ошибка сервера, обновите страницу!');
+    alert('Ошибка сервера, обновите страницу!');
   });
 }
 
