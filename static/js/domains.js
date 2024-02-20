@@ -37,7 +37,7 @@ function CreateDomainRow(id, domain, state){
 
     var table = $('#domains_list')
     var pos = $('.domainrow').length + 1
-    var row = $(`<tr id="row_${pos}" class="domainrow"></tr>`)
+    var row = $(`<tr id="row-${id}" class="domainrow"></tr>`)
     var number = $(`<td>${pos}</td>`)
     var active = $(`<td><input class="domainSwitch" type="checkbox" ${checked} onchange="SwitchDomain('${domain}', this.checked)"/></td>`)
     var name = $(`<td><input id="d-${id}" class="domainName" value="${domain}" disabled></td>`)
@@ -95,3 +95,16 @@ function RemoveDomain(domain, hash){
     var hash = document.getElementById('removeHash').value
     false;
 }
+
+function SearchDomain(field) {
+    var origin = $(field).val().toLowerCase()
+    var pattern = new RegExp(origin, 'g')
+    $('.domainName').each(function (i, obj) {
+      var row = $(this).closest('tr')
+      if (!obj.value.match(pattern)) {
+        $(row).css("display", "none");
+      } else {
+        $(row).css("display", "");
+      }
+    });
+  }
