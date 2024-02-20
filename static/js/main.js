@@ -8,6 +8,9 @@ function PostSender(url, data, func){
   })
   .done(function(result){
     func(result);
+  })
+  .fail(function(result){
+    alert('Внутрення ошибка сервера, обновите страницу!');
   });
 }
 

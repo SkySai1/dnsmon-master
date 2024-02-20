@@ -58,6 +58,32 @@ function SwitchDomain(domain, state){
     var hash = document.getElementById('switchHash').value
     var url = '/domains/' + hash
     new PostSender(url, {'domains': [domain], 'states': [state]}, nothing);
+    var allcheck = document.getElementById('switchall');
+    var checkers = $('.domainSwitch').map(function(){
+        return this.checked
+    }).get()
+
+    if (checkers.includes(false)) {
+        allcheck.checked = false
+    } else {
+        allcheck.checked = true
+    }
+}
+
+function SwitchAllDomains(state) {
+    var hash = document.getElementById('switchHash').value
+    var url = '/domains/' + hash
+    domains = $('.domainName').map(function(){
+        return this.value
+    }).get()
+    var states = []
+    domains.forEach(function(){
+        states.push(state)
+    })
+    new PostSender(url, {'domains': domains, 'states': states}, nothing);
+    $('.domainSwitch').map(function(){
+        this.checked = state
+    });
 }
 
 function EditDomain(domain, hash) {

@@ -45,15 +45,15 @@ def edit_object(app:Flask, fqdn:str, otype:str):
     else:
         return '', 520
 
-def switch_object(app:Flask, data:str|list, states:str|list, otype:str):
-    if type(data) is str: data = [data]
+def switch_object(app:Flask, domains:str|list, states:str|list, otype:str):
+    if type(domains) is str: domains = [domains]
     if type(states) is str: states = [states]
     db = AccessDB(app.config.get('DB').engine)
     if otype.lower() == 'd':
         result = []
-        for domain in data:
+        for domain in domains:
             try: 
-                state = states[data.index(domain)]
+                state = states[domains.index(domain)]
             except:
                 logging.error(f'Not specify state for domain {domain}', exc_info=(logging.DEBUG >= logging.root.level)) 
                 return [''], 520
