@@ -15,6 +15,7 @@
             <p id="domainMessage"></p>
             <p id="hmsg" hidden></p>
             <div>
+                <input id="newHash" type="hidden", value="{{new}}">
                 <input id="switchHash" type="hidden", value="{{switch}}">
                 <input id="editHash" type="hidden", value="{{edit}}">
                 <input id="removeHash" type="hidden", value="{{remove}}">
@@ -22,7 +23,9 @@
             <form method="post" onsubmit="return false">
                 <table>
                     <tr>
-                        <td><p>{{form.domain()}}{{form.new()}}</p></td>
+                        <td><p>{{form.domain()}}</p></td>
+                        <td><p>{{form.notify()}}</p></td>
+                        <td><p>{{form.note()}}</p></td>
                         <!-- <td><button onclick="new_object('/domains',$(this.form).serializeArray(), '{{new}}')">Плюсик</button></td> -->
                         <td><button onclick="DomainCreate($(this.form).serializeArray())">Плюсик</button></td>
                         <td><input id="d_import" type="file" onchange="object_import('/domains',this, '{{new}}')"> <label for="d_import">Импорт</label></td>
@@ -35,8 +38,8 @@
             <hr>
             <table id="domains_list">
                 <tr>
-                    <td></td><td><input id="switchall" type="checkbox" checked onchange="SwitchAllDomains(this.checked)"></td>
-                    <td></td><td></td>
+                    <td>№</td><td><input id="switchall" type="checkbox" checked onchange="SwitchAllDomains(this.checked)"></td>
+                    <td>Домен</td><td>Канал уведомления</td><td>Примечание</td><td></td>
                     <td><button onclick="RemoveManyDomains()">Много корзин</button></td>
                     <td><input id="selectall" type="checkbox" onchange="AllSelectRows(this.checked)"></td>
                 </tr>

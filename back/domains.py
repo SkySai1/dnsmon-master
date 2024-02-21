@@ -29,24 +29,14 @@ def domains_page(app:Flask):
 
 
 def domains_action_worker(app:Flask, action):
-    '''try:
-        id = int(domain)
-        domain = None
-    except:
-        id = None
-        if not domain: return '', 500
-        if domain == '*': domain = None
-        else: 
-            domain = domain_validate(domain)
-            if domain is BadName:
-                return 'badname', 520'''
     try:
         domains = request.form.getlist('domains[]')
         for domain in domains:
             if domain_validate(domain) is BadName:
                 return ['badname'], 520
-        if action == Domain.hash_new: 
-            return add_object(app, domains, 'd')
+        if action == Domain.hash_new:
+            data = request.get_json() 
+            return add_object(app, data, 'd')
         elif action == Domain.hash_switch:
             states = request.form.getlist('states[]')
             return switch_object(app, domains, states, 'd')

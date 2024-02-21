@@ -92,6 +92,8 @@ class D_list(Base):
     __tablename__ = "domains_list"
     id = Column(Integer, primary_key=True)
     fqdn = Column(String(255), nullable=False, unique=True)
+    notify = Column(String(255))
+    note = Column(Text)
     active = Column(Boolean, default=True)
 
 
@@ -257,17 +259,18 @@ class AccessDB:
             logging.error('Get domains list from database is fail', exc_info=(logging.DEBUG >= logging.root.level))
             return None
         
-    def new_domain(self, fqdn:str):
+    def new_domain(self, data:dict):
         try:
             with Session(self.engine) as conn:
-                if conn.execute(select(D_list).filter(D_list.fqdn == fqdn)).fetchone():
-                    return UniqueViolation
-                stmt = insert(D_list).values(fqdn = fqdn).returning(D_list)
-                data = conn.scalars(stmt).fetchmany()
+                #if conn.execute(select(D_list).filter(D_list.fqdn == fqdn)).fetchone():
+                #    return UniqueViolation
+                #stmt = insert(D_list).values(fqdn = fqdn).returning(D_list)
+                stmt = insert(D_list).returning(D_list)
+                result = conn.scalars(stmt, data).fetchmany()
                 conn.commit()
-                for obj in data:
-                    return obj.id, obj.fqdn, obj.active
-                return None, None
+                for obj in result:
+                    return obj.id, obj.fqdn, obj.notify, obj.note, obj.active
+                return None
         except Exception as e:
             logging.error('Add domain into database is fail', exc_info=(logging.DEBUG >= logging.root.level))
             return ''

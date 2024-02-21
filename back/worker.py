@@ -7,18 +7,15 @@ from back.functions import domain_validate
 from back.object import BadName, Domain, Zones
 
 
-def add_object(app:Flask, data:str|list, otype:str):
+def add_object(app:Flask, data:list, otype:str):
     try:
-        if type(data) is str: data = [data]
         db = AccessDB(app.config.get('DB').engine)
         if otype.lower() == 'd':
             result = []
             for d in data:
-                state = db.new_domain(d)
-                if state is UniqueViolation:
-                    result.append(['exist', 520])
-                else:
-                    result.append(state)
+                if domain_validate(d.get('fqdn')) is BadName:
+                    return ['fail'], 520
+                result.append(db.new_domain(d))
             return result
     except:
         return ['fail'], 520

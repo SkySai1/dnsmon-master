@@ -6,27 +6,32 @@ function GetAll(){
 
 function DomainCreate(data) {
     'use strict';
-    var domain = data[0]['value'];
-    var hash = data[1]['value'];
+    var hash = document.getElementById('newHash').value;
     var url = '/domains/' + hash;
-    new PostSender(url, {'domains': [domain]}, DomainPostWork);
+    var formdata = {
+        'fqdn': data[0].value,
+        'notify': data[1].value,
+        'note': data[2].value
+    };
+    new PostSender(url, JSON.stringify([formdata]), DomainPostWork, 'application/json');
 }
 
 function DomainPostWork(result) {
     'use strict';
     result.forEach(data => {
+        console.log(data)
         switch (data[0]){
             case 'exist':
                 new Messager($('#domainMessage'), 'Домен существует')
                 break
             default:
-                new CreateDomainRow(data[0], data[1], data[2]);
+                new CreateDomainRow(data[0], data[1], data[2], data[3], data[4]);
                 break
         };
     });
 };
 
-function CreateDomainRow(id, domain, state){
+function CreateDomainRow(id, domain, notify, note, state){
     if (state == true || state == "True") {
       var checked = 'checked'
     } else {
@@ -34,23 +39,24 @@ function CreateDomainRow(id, domain, state){
       var check = document.getElementById('switchall');
       check.checked = false;
     }
-
+    
     var table = $('#domains_list')
     var pos = $('.domainrow').length + 1
     var row = $(`<tr id="row-${id}" class="domainrow"></tr>`)
-    var number = $(`<td>${pos}</td>`)
-    var active = $(`<td><input class="domainSwitch" type="checkbox" ${checked} onchange="SwitchDomain('${domain}', this.checked)"/></td>`)
-    var name = $(`<td><input id="d-${id}" class="domainName" value="${domain}" disabled></td>`)
-    var edit = $(`<td class="editcell"><button id="de-${id}" class="editbutton" onclick="EditDomain('${id}')">Ручка</button></td>`)
-    var trash = $(`<td><button onclick="RemoveDomain('${id}')">Корзина</button></td>`)
-    var select = $(`<td><input id="ds-${id}" class="select" type="checkbox" onchange="SelectRow(this)"></td>`)
+    var data = new Object
+    data.number = $(`<td>${pos}</td>`)
+    data.active = $(`<td><input class="domainSwitch" type="checkbox" ${checked} onchange="SwitchDomain('${domain}', this.checked)"/></td>`)
+    data.name = $(`<td><input id="dname-${id}" class="domainName" value="${domain}" disabled></td>`)
+    data.notify = $(`<td><input id="dnotify-${id}" class="domainNotify" value="${notify}" disabled></td>`)
+    data.note = $(`<td><textarea id="dnote-${id}" class="domainNote"disabled>${note}</textarea></td>`)
+    data.edit = $(`<td class="editcell"><button id="de-${id}" class="editbutton" onclick="EditDomain('${id}')">Ручка</button></td>`)
+    data.trash = $(`<td><button onclick="RemoveDomain('${id}')">Корзина</button></td>`)
+    data.select = $(`<td><input id="ds-${id}" class="select" type="checkbox" onchange="SelectRow(this)"></td>`)
 
-    row.append(number)
-    row.append(active)
-    row.append(name)
-    row.append(edit)
-    row.append(trash)
-    row.append(select)
+    for (let key in data){
+        row.append(data[key])
+    }
+
     table.append(row)
   }
 
