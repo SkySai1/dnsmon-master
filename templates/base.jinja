@@ -5,14 +5,14 @@
     <script type="text/javascript" src="static/js/jquery.js"></script>
     <script type="text/javascript" src="static/js/main.js"></script>
     <link rel="stylesheet" href="static/css/loader.css">
+    <link rel="stylesheet" href="static/css/base.css">
     {% endblock %}
 </head>
 <body>
     <div id="header">
-        <div id="navbar">
-        <a href="/">Главная</a>
-        <a href="/domains">Домены</a>
-        <a href="/zones">Зоны</a>
+        <div id="navbar" class="flex-center header-1">
+        <a id="mainlink" href="/">Главная</a>
+        <a id="domainslink"href="/domains">Домены</a>
         </div>
     </div>
     {% block body%}

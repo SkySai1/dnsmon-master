@@ -3,14 +3,16 @@
 {% block head %}
     {{ super() }}
     <script type="text/javascript" src="static/js/domains.js"></script>
-    <script> window.onload = GetAll()</script>
+    <script> $(document).ready(function(){GetAll()})</script>
+    <link rel="stylesheet" href="static/css/domains.css">
     <style>
+        #domainslink{
+            color: #00a1ff;
+        }
     </style>
 {% endblock %}
 {% block body %}
-
-    <h1>Список доменов </h1>
-    <div>
+    <div id="content">
         <div>
             <div id="domainMessage"></div>
             <p id="hmsg" hidden></p>

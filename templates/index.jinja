@@ -2,12 +2,15 @@
 {% block title %}Главная{% endblock %}
 {% block head %}
     {{ super() }}
+    <link rel="stylesheet" href="static/css/index.css">
     <style>
+        #mainlink{
+            color: #00a1ff;
+        }
     </style>
 {% endblock %}
 {% block body %}
-    <h1>Главная</h1>
-    <div class="loadbox"><span class="loader"></span></div>
+    {# <div class="loadbox"><span class="loader"></span></div> #}
     <p>{{ ua }}</p>
 
 {% endblock %}

@@ -1,0 +1,63 @@
+@font-face {
+    font-family: 'DTC';
+    src: url(../fonts/DTC.otf)
+}
+@font-face {
+    font-family: 'current';
+    src: url(../fonts/current.otf)
+}
+@font-face {
+    font-family: 'outward';
+    src: url(../fonts/outward-block.ttf)
+}
+
+
+
+body{
+    margin-bottom: 360px !important;
+    background: #e9e9e9ab;
+}
+
+#navbar{
+    border-bottom: solid;
+}
+
+.flex-center{
+    display: flex;
+    align-content: center;
+    flex-wrap: nowrap;
+    flex-direction: row;
+    width: inherit;
+    justify-content: center;    
+}
+
+.header-1 > a {
+    padding: 0.2em;
+    font-family: fantasy;
+    font-size: x-large;
+}
+
+a {
+    text-decoration: none;
+    color: #3a4f6d;
+}
+
+a:link {
+}
+
+a:visited {
+    color: #3a4f6d;
+    
+}
+
+a:focus {
+    color: #729bd4;
+}
+
+a:hover {
+    color: #729bd4;
+}
+
+a:active {
+    color: #23d6bb;
+}

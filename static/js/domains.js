@@ -1,6 +1,9 @@
 function GetAll(){
     'use strict';
     var url = '/domains';
+    var loadbox = $('<div class="loadbox"><span class="loader"></span></div>');
+    loadbox.addClass('loaderfull');
+    $('#content').append(loadbox);
     new PostSender(url, '', DomainPostWork);
 }
 
@@ -29,6 +32,7 @@ function DomainPostWork(result) {
                 break
         };
     });
+    $('.loadbox').remove()
 };
 
 function CreateDomainRow(id, domain, notify, note, state){

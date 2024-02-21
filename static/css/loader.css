@@ -31,4 +31,11 @@
   @keyframes scale {
    100% { transform: scale(0.5) translateY(5px)}
   }
-    
+  
+  .loaderfull {
+    position: absolute;
+    width: 100vw;
+    height: 100vh;
+    background: #ffffffeb;
+    top: -0.1em;  
+  }
