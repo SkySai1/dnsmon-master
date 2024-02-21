@@ -297,7 +297,12 @@ class AccessDB:
                 #result = conn.execute(update(D_list).returning(D_list), [data]).fetchmany()
                 conn.commit()
                 for obj in result:
-                    return {'id': obj[0].id, 'value': obj[0].fqdn}
+                    return {
+                        'id': obj[0].id, 
+                        'fqdn': obj[0].fqdn,
+                        'notify': obj[0].notify,
+                        'note': obj[0].note
+                    }
         except Exception as e:
             logging.error('Update domains in database is fail', exc_info=(logging.DEBUG >= logging.root.level))
             return False

@@ -38,11 +38,13 @@ def remove_object(app:Flask, indexes:str|list, otype:str):
 def edit_object(app:Flask, data:list, otype:str):
     db = AccessDB(app.config.get('DB').engine)
     for one in data:
-        if domain_validate(one['value']) is BadName:
+        if domain_validate(one.get('fqdn')) is BadName:
             return ['fail'], 520
         new = {
-            'id': one['index'],
-            'fqdn': one['value']
+            'id': one.get('index'),
+            'fqdn': one.get('fqdn'),
+            'notify': one.get('notify'),
+            'note': one.get('note')
         }
         result = db.update_domain(new)
     if result:

@@ -19,7 +19,6 @@ function DomainCreate(data) {
 function DomainPostWork(result) {
     'use strict';
     result.forEach(data => {
-        console.log(data)
         switch (data[0]){
             case 'exist':
                 new Messager($('#domainMessage'), 'Домен существует')
@@ -43,14 +42,22 @@ function CreateDomainRow(id, domain, notify, note, state){
     var table = $('#domains_list')
     var pos = $('.domainrow').length + 1
     var row = $(`<tr id="row-${id}" class="domainrow"></tr>`)
+
+    var editbtn = $(`<button id="de-${id}" class="editbutton">Ручка</button>`)
+    editbtn.click(function(){new EditDomain(id)})
+    var removebtn = $(`<button>Корзина</button>`)
+    removebtn.click(function(){new RemoveDomain(id)})
+
     var data = new Object
     data.number = $(`<td>${pos}</td>`)
     data.active = $(`<td><input class="domainSwitch" type="checkbox" ${checked} onchange="SwitchDomain('${domain}', this.checked)"/></td>`)
     data.name = $(`<td><input id="dname-${id}" class="domainName" value="${domain}" disabled></td>`)
     data.notify = $(`<td><input id="dnotify-${id}" class="domainNotify" value="${notify}" disabled></td>`)
     data.note = $(`<td><textarea id="dnote-${id}" class="domainNote"disabled>${note}</textarea></td>`)
-    data.edit = $(`<td class="editcell"><button id="de-${id}" class="editbutton" onclick="EditDomain('${id}')">Ручка</button></td>`)
-    data.trash = $(`<td><button onclick="RemoveDomain('${id}')">Корзина</button></td>`)
+    data.edit = $(`<td class="editcell"></td>`)
+    data.edit.append(editbtn);
+    data.trash = $(`<td></td>`)
+    data.trash.append(removebtn);
     data.select = $(`<td><input id="ds-${id}" class="select" type="checkbox" onchange="SelectRow(this)"></td>`)
 
     for (let key in data){
@@ -101,27 +108,30 @@ function EditDomain(id) {
     var cell = row.children('.editcell')
     var edit = cell.children('.editbutton')
     var input = row.children('td').children('.domainName')
-    const origin = input.val()
-    var save = $(`<button class="savebtn" onclick="EditDomainSave('${id}')">Дискета</button>`)
-    var cancel = $(`<button class="cancelbtn" onclick="EditDomainCancel('${id}', '${origin}')">Крестик</button>`)
+    var notify = row.children('td').children('.domainNotify')
+    var note = row.children('td').children('.domainNote')
+    var origin = new Object
+    origin.name = input.val()
+    origin.notify = notify.val()
+    origin.note = note.text()
+    var save = $(`<button class="savebtn">Дискета</button>`)
+    save.click(function(){EditDomainSave(id, input, notify, note)})
+    var cancel = $(`<button class="cancelbtn" onclick="">Крестик</button>`)
+    cancel.click(function(){EditDomainCancel(origin, edit, save, cancel, input, notify, note)})
     edit.css('display', 'none');
-    //cell.html('')
     cell.append(save)
     cell.append(cancel)
     input.prop('disabled', false);
-    false;
+    notify.prop('disabled', false);
+    note.prop('disabled', false);
 }
 
-function EditDomainSave(id){
-    var row = $('.domainrow').filter(function(){
-        if (this.id.match(id)) {
-            return this
-        }
-    })
-    var input = row.children('td').children('.domainName')
+function EditDomainSave(id, input, notify, note){
     var data = new Object()
     data.index = id
-    data.value = input.val()
+    data.fqdn = input.val()
+    data.notify = notify.val()
+    data.note = note.val()
 
     var hash = document.getElementById('editHash').value
     var url = '/domains/' + hash
@@ -141,29 +151,37 @@ function EditDomainSavePostWork(array){
         var save = cell.children('.savebtn')
         var cancel = cell.children('.cancelbtn')
         var input = row.children('td').children('.domainName')
-        input.val(one['value']);
-        input.attr('value', one['value']);
+        var notify = row.children('td').children('.domainNotify')
+        var note = row.children('td').children('.domainNote')
+
+        input.val(one['fqdn']);
+        input.attr('value', one['fqdn']);
         input.prop('disabled', true);
+
+        notify.val(one['notify'])
+        notify.attr('value', one['notify'])
+        notify.prop('disabled', true)
+
+        note.text(one['note'])
+        note.prop('disabled', true)
+
         edit.css('display', '');
         save.remove();
         cancel.remove();
     })
 }
 
-function EditDomainCancel(id, origin){
-    console.log('haaha')
-    var row = $('.domainrow').filter(function(){
-        if (this.id.match(id)) {
-            return this
-        }
-    })
-    var cell = row.children('.editcell')
-    var edit = cell.children('.editbutton')
-    var save = cell.children('.savebtn')
-    var cancel = cell.children('.cancelbtn')
-    var input = row.children('td').children('.domainName')
-    input.val(origin)
+function EditDomainCancel(origin, edit, save, cancel, input, notify, note){
+    input.val(origin.name);
     input.prop('disabled', true);
+
+    notify.val(origin.notify)
+    notify.prop('disabled', true)
+
+    note.val(origin.note)
+    note.prop('disabled', true)
+
+
     edit.css('display', '');
     save.remove();
     cancel.remove();
