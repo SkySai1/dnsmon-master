@@ -6,6 +6,7 @@ function GetAll(){
 
 function DomainCreate(data) {
     'use strict';
+    //new NewMessageBlock();
     var hash = document.getElementById('newHash').value;
     var url = '/domains/' + hash;
     var formdata = {
@@ -21,7 +22,7 @@ function DomainPostWork(result) {
     result.forEach(data => {
         switch (data[0]){
             case 'exist':
-                new Messager($('#domainMessage'), 'Домен существует')
+                new Messager(data[1] + ' - домен существует')
                 break
             default:
                 new CreateDomainRow(data[0], data[1], data[2], data[3], data[4]);
@@ -248,3 +249,24 @@ function SearchDomain(field) {
       }
     });
   }
+
+function DomainsImport(input) {
+    var hash = document.getElementById('newHash').value;
+    var url = '/domains/' + hash;
+    let file = input.files[0];
+    input.value = '';
+    let reader = new FileReader();
+    reader.onload = function(e) {
+        //new NewMessageBlock();
+        var formdata = []
+        var result = JSON.parse(e.target.result);
+        result.forEach(line => {
+            formdata.push({
+                'fqdn': line.split(' ')[0],
+            });
+
+        })
+        new PostSender(url, JSON.stringify(formdata), DomainPostWork, 'application/json');
+    }
+    reader.readAsText(file)
+}

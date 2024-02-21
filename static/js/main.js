@@ -23,8 +23,25 @@ function nothing(){
   false;
 }
 
-function Messager(element, message) {
-  $(element).text(message);
+function NewMessageBlock(){
+    'use strict';
+    var messageBlock = $(`<div class='messageBlock'></div>`);
+    var closebuton = $(`<button>Крестик</button>`);
+    closebuton.click(function(){messageBlock.remove();});
+    messageBlock.append(closebuton)
+    $('#domainMessage').append(messageBlock);
+
+}
+
+function Messager(message) {
+  'use strict';
+  if (!$('#domainMessage div:last')[0]) {
+    new NewMessageBlock();
+  }
+  var last = $('#domainMessage div:last');
+  var text = $(`<p>${message}</p>`);
+  last.append(text)
+  //$(element).text(message);
 }
 
 

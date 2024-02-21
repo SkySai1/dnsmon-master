@@ -15,7 +15,10 @@ def add_object(app:Flask, data:list, otype:str):
             for d in data:
                 if domain_validate(d.get('fqdn')) is BadName:
                     return ['fail'], 520
-                result.append(db.new_domain(d))
+                response = db.new_domain(d)
+                if response is UniqueViolation:
+                    result.append(['exist', d.get('fqdn'), 520])
+                else: result.append(response)
             return result
     except:
         return ['fail'], 520

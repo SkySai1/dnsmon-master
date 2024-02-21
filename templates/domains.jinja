@@ -12,7 +12,7 @@
     <h1>Список доменов </h1>
     <div>
         <div>
-            <p id="domainMessage"></p>
+            <div id="domainMessage"></div>
             <p id="hmsg" hidden></p>
             <div>
                 <input id="newHash" type="hidden", value="{{new}}">
@@ -28,7 +28,7 @@
                         <td><p>{{form.note()}}</p></td>
                         <!-- <td><button onclick="new_object('/domains',$(this.form).serializeArray(), '{{new}}')">Плюсик</button></td> -->
                         <td><button onclick="DomainCreate($(this.form).serializeArray())">Плюсик</button></td>
-                        <td><input id="d_import" type="file" onchange="object_import('/domains',this, '{{new}}')"> <label for="d_import">Импорт</label></td>
+                        <td><input id="d_import" type="file" onchange="DomainsImport(this)">Импорт</label></td>
                     </tr>
                 </table>
             </form>

@@ -1,5 +1,6 @@
 import datetime
 import logging
+import re
 import time
 import uuid
 import sys
@@ -8,6 +9,7 @@ from back.functions import randomword
 from initconf import ConfData as CD
 from hashlib import sha256
 from sqlalchemy.engine.base import Engine
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy import CHAR, SmallInteger, TypeDecorator, engine, UUID, BigInteger, Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Text, ARRAY, exc, create_engine, delete, insert, select, or_, not_, update
 from sqlalchemy.orm import declarative_base, Session, relationship
 from flask_sqlalchemy import SQLAlchemy
@@ -266,11 +268,17 @@ class AccessDB:
                 #    return UniqueViolation
                 #stmt = insert(D_list).values(fqdn = fqdn).returning(D_list)
                 stmt = insert(D_list).returning(D_list)
-                result = conn.scalars(stmt, data).fetchmany()
-                conn.commit()
-                for obj in result:
-                    return obj.id, obj.fqdn, obj.notify, obj.note, obj.active
-                return None
+                try:
+                    result = conn.scalars(stmt, data).fetchmany()
+                    conn.commit()
+                    for obj in result:
+                        return obj.id, obj.fqdn, obj.notify, obj.note, obj.active
+                    return None
+                except IntegrityError as e:
+                    msg = re.sub('\n',' ',e.orig.args[0])
+                    logging.warning(f'Add new domain is fail: {msg}')
+                    assert isinstance(e.orig, UniqueViolation)
+                    return UniqueViolation
         except Exception as e:
             logging.error('Add domain into database is fail', exc_info=(logging.DEBUG >= logging.root.level))
             return ''
