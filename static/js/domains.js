@@ -1,10 +1,27 @@
 function GetAll(){
     'use strict';
     var url = '/domains';
-    var loadbox = $('<div class="loadbox"><span class="loader"></span></div>');
-    loadbox.addClass('loaderfull');
-    $('#content').append(loadbox);
-    new PostSender(url, '', DomainPostWork);
+    //var loadbox = $('<div class="loadbox"><span class="loader"></span></div>');
+    //loadbox.addClass('loaderfull');
+    //$('#content').append(loadbox);
+    new PostSender(url, '', GetAllPostWork);
+}
+
+function GetAllPostWork(result){
+    'use strict';
+    result.forEach(data => {
+        new CreateDomainRow(data[0], data[1], data[2], data[3], data[4]);
+    })
+    $('.loadbox').hide()
+}
+
+function OpenCloseNewDomainFiled(id, button){
+    'use strict';
+    if ($(id).is(":visible")){
+        $(id).hide();
+    } else {
+        $(id).show();
+    }
 }
 
 function DomainCreate(data) {
@@ -25,14 +42,15 @@ function DomainPostWork(result) {
     result.forEach(data => {
         switch (data[0]){
             case 'exist':
-                new Messager(data[1] + ' - домен существует')
+                new Messager(data[1] + ' - уже существует')
                 break
             default:
+                new Messager(data[1] + ' - успешно добавлен')
                 new CreateDomainRow(data[0], data[1], data[2], data[3], data[4]);
                 break
         };
     });
-    $('.loadbox').remove()
+    $('.loadbox').hide()
 };
 
 function CreateDomainRow(id, domain, notify, note, state){
@@ -115,6 +133,9 @@ function EditDomain(id) {
     var input = row.children('td').children('.domainName')
     var notify = row.children('td').children('.domainNotify')
     var note = row.children('td').children('.domainNote')
+    $(note.parent()).on('click', function(e){
+        console.log(this)
+    })
     var origin = new Object
     origin.name = input.val()
     origin.notify = notify.val()
@@ -222,6 +243,7 @@ function RemoveDomain(id){
 }
 
 function RemoveManyDomains(){
+    $('.loadbox').show()
     var hash = document.getElementById('removeHash').value
     var url = '/domains/' + hash
     var reg = /\d+/
@@ -239,6 +261,7 @@ function RemoveDomainPostWork(data){
     data.forEach(id => {
         $('#row-'+id).remove()
     })
+    $('.loadbox').hide()
 }
 
 function SearchDomain(field) {
@@ -260,6 +283,7 @@ function DomainsImport(input) {
     let file = input.files[0];
     input.value = '';
     let reader = new FileReader();
+    $('.loadbox').show()
     reader.onload = function(e) {
         //new NewMessageBlock();
         var formdata = []

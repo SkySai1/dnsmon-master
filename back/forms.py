@@ -9,7 +9,7 @@ class LoginForm(FlaskForm):
     submit = SubmitField('Войти')
 
 class NewDomain(FlaskForm):
-    domain = StringField('Домен', validators=[DataRequired()], render_kw={"placeholder": "Добавить домен"})
+    domain = StringField('Домен', render_kw={"placeholder": "Добавить домен"})
     notify = StringField('Канал', render_kw={"placeholder": "Канал уведомлений"})
     note = TextAreaField('Примечание')
 
